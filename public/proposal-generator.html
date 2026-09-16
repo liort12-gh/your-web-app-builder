@@ -1515,6 +1515,7 @@ async function bootSign(){
     renderPreview();
     renderSignPanel(!!signed, signed?d.signature.signerName:'');
   }catch(e){
+    console.error('bootSign', e);
     sb.innerHTML='<div class="intro">Dit voorstel is niet (meer) beschikbaar. Vraag de afzender om een nieuwe link.</div>';
   }
 }
