@@ -589,6 +589,7 @@ function paginateTables(){
   while(page && guard++<6){
     const pad=page.querySelector('.pad');
     const table=page.querySelector('table.ptable');
+    if(!table) break;
     const note=page.querySelector('.smallnote');
     const pageRect=page.getBoundingClientRect();
     const mm=pageRect.height/297;                     // px per mm
