@@ -31,10 +31,10 @@ type Row = {
   token: string;
   title: string;
   docType: string;
-  createdAt?: string;
+  createdAt?: string | undefined;
   status: "sent" | "signed" | "missing" | "loading";
-  signerName?: string;
-  signedAt?: string;
+  signerName?: string | undefined;
+  signedAt?: string | undefined;
 };
 
 const SHARES_KEY = "msp_shares_v1";
