@@ -1,24 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "MSP Proposal Generator — Voorstellen maken" },
+      {
+        name: "description",
+        content:
+          "Maak, bewerk en download professionele merchant- en partnervoorstellen met tarieven, voorwaarden en ondertekening.",
+      },
+      { property: "og:title", content: "MSP Proposal Generator" },
+      {
+        property: "og:description",
+        content:
+          "Stel in enkele klikken een compleet voorstel samen en download het als PDF.",
+      },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
+    <main className="h-screen w-screen overflow-hidden bg-background">
+      <h1 className="sr-only">MSP Proposal Generator</h1>
+      <iframe
+        src="/proposal-generator.html"
+        title="MSP Proposal Generator"
+        className="h-full w-full border-0"
       />
-    </div>
+    </main>
   );
 }
