@@ -14,7 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      proposals: {
+        Row: {
+          created_at: string
+          doc_type: string
+          id: string
+          payload: Json
+          share_token: string
+          signature: Json | null
+          signed_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doc_type?: string
+          id?: string
+          payload: Json
+          share_token: string
+          signature?: Json | null
+          signed_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          id?: string
+          payload?: Json
+          share_token?: string
+          signature?: Json | null
+          signed_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
