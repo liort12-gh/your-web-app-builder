@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicProposalsRouteImport } from './routes/api/public/proposals'
+import { Route as ApiPublicProposalsSignRouteImport } from './routes/api/public/proposals.sign'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,39 @@ const ApiPublicProposalsRoute = ApiPublicProposalsRouteImport.update({
   path: '/api/public/proposals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicProposalsSignRoute = ApiPublicProposalsSignRouteImport.update({
+  id: '/sign',
+  path: '/sign',
+  getParentRoute: () => ApiPublicProposalsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api/public/proposals': typeof ApiPublicProposalsRoute
+  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
+  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/public/proposals': typeof ApiPublicProposalsRoute
+  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
+  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api/public/proposals': typeof ApiPublicProposalsRoute
+  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
+  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/proposals'
+  fullPaths: '/' | '/api/public/proposals' | '/api/public/proposals/sign'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/proposals'
-  id: '__root__' | '/' | '/api/public/proposals'
+  to: '/' | '/api/public/proposals' | '/api/public/proposals/sign'
+  id: '__root__' | '/' | '/api/public/proposals' | '/api/public/proposals/sign'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiPublicProposalsRoute: typeof ApiPublicProposalsRoute
+  ApiPublicProposalsRoute: typeof ApiPublicProposalsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +74,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicProposalsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/proposals/sign': {
+      id: '/api/public/proposals/sign'
+      path: '/sign'
+      fullPath: '/api/public/proposals/sign'
+      preLoaderRoute: typeof ApiPublicProposalsSignRouteImport
+      parentRoute: typeof ApiPublicProposalsRoute
+    }
   }
 }
 
+interface ApiPublicProposalsRouteChildren {
+  ApiPublicProposalsSignRoute: typeof ApiPublicProposalsSignRoute
+}
+
+const ApiPublicProposalsRouteChildren: ApiPublicProposalsRouteChildren = {
+  ApiPublicProposalsSignRoute: ApiPublicProposalsSignRoute,
+}
+
+const ApiPublicProposalsRouteWithChildren =
+  ApiPublicProposalsRoute._addFileChildren(ApiPublicProposalsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiPublicProposalsRoute: ApiPublicProposalsRoute,
+  ApiPublicProposalsRoute: ApiPublicProposalsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
