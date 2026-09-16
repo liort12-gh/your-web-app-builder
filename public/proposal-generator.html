@@ -1333,8 +1333,198 @@ pdfBtn.addEventListener('click', async ()=>{
   setTimeout(()=>{pdfBtn.textContent=orig; delete pdfBtn.dataset.busy;}, 2600);
 });
 
-renderAll();
-initStore();
+/* ---------- delen met prospect + ondertekening ---------- */
+const API='/api/public/proposals';
+const QS=new URLSearchParams(location.search);
+const SIGN_TOKEN=QS.get('sign');
+const SHARESKEY='msp_shares_v1';
+
+function sigFieldDefs(isP){
+  return [
+    {key:'partij', label:(isP?'Partner':'Merchant')+':'},
+    {key:'datumplaats', label:'Datum en plaats'},
+    {key:'bedrijfsnaam', label:'Bedrijfsnaam/handelsnaam', small:'(zoals opgegeven bij Kamer van Koophandel)'},
+    {key:'kvk', label:'KvK-nummer:'},
+    {key:'bedrijfsvorm', label:'Bedrijfsvorm:'},
+    {sub:'Contactgegevens'},
+    {key:'contactnaam', label:'Voor- en achternaam:'},
+    {key:'telefoon', label:'Telefoonnummer:'},
+    {key:'email', label:'E-mailadres:'},
+    {key:'handtekening', label:'Handtekening tekenbevoegde', image:true, gap:true},
+  ];
+}
+
+function sharesAll(){ try{ return JSON.parse(localStorage.getItem(SHARESKEY)||'{}'); }catch(e){ return {}; } }
+function sharesPut(token,rec){ const a=sharesAll(); a[token]=Object.assign({},a[token],rec); try{ localStorage.setItem(SHARESKEY, JSON.stringify(a)); }catch(e){} }
+
+/* read-only preview in sign mode */
+const _renderPreview=renderPreview;
+renderPreview=function(){
+  _renderPreview.apply(this, arguments);
+  if(SIGN_TOKEN){
+    document.querySelectorAll('#preview [contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
+  }
+};
+
+/* ---------- creator: deellink maken ---------- */
+function showShareLink(token){
+  const url=location.origin+'/sign/'+token;
+  const old=document.getElementById('shareModal'); if(old) old.remove();
+  const wrap=document.createElement('div');
+  wrap.id='shareModal';
+  wrap.innerHTML=`<div class="box">
+    <h4>Deellink voor de prospect</h4>
+    <p>Stuur deze link naar uw prospect. Zij kunnen het voorstel bekijken, de laatste pagina invullen en digitaal ondertekenen. De status ziet u terug in Overzicht.</p>
+    <input id="shareUrl" readonly value="${esc(url)}">
+    <div class="acts">
+      <button class="btn ghost" id="shareClose">Sluiten</button>
+      <button class="btn primary" id="shareCopy">Kopieer link</button>
+    </div>
+  </div>`;
+  document.body.appendChild(wrap);
+  const input=wrap.querySelector('#shareUrl');
+  input.focus(); input.select();
+  wrap.querySelector('#shareClose').addEventListener('click',()=>wrap.remove());
+  wrap.querySelector('#shareCopy').addEventListener('click',async()=>{
+    try{ await navigator.clipboard.writeText(url); }
+    catch(e){ input.select(); document.execCommand && document.execCommand('copy'); }
+    wrap.querySelector('#shareCopy').textContent='Gekopieerd \u2713';
+  });
+  wrap.addEventListener('click',e=>{ if(e.target===wrap) wrap.remove(); });
+}
+
+async function shareProposal(){
+  const snap=snapshotState();
+  const title=(S.fields.bedrijf||'Voorstel').trim()||'Voorstel';
+  flash('Deellink maken\u2026');
+  try{
+    const existing = CUR ? (lsAll()[CUR]||{}).shareToken : null;
+    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title,docType:S.docType,payload:JSON.stringify(snap),shareToken:existing||undefined})});
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(out.error||'mislukt');
+    const token=out.shareToken;
+    let id=CUR||('p_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+    lsPut(id,{name:title,docType:S.docType,updatedAt:new Date().toISOString(),payload:JSON.stringify(snap),shareToken:token});
+    CUR=id;
+    sharesPut(token,{title,docType:S.docType,createdAt:new Date().toISOString(),localId:id});
+    await refreshSaved();
+    flash('Deellink klaar \u2713', true);
+    showShareLink(token);
+  }catch(e){
+    flash(e && e.message==='already signed' ? 'Al ondertekend \u2014 gebruik Dupliceer' : 'Deellink mislukt');
+  }
+}
+
+async function checkSignedStatus(token){
+  if(!token) return;
+  try{
+    const res=await fetch(API+'?token='+encodeURIComponent(token));
+    if(!res.ok) return;
+    const d=await res.json();
+    sharesPut(token,{status:d.status,signedAt:d.signedAt});
+    if(d.status==='signed' && d.signature){
+      S.sig=d.signature.fields||{};
+      S.signature=d.signature.signatureImage||null;
+      renderPreview();
+      flash('Ondertekend door '+(d.signature.signerName||'prospect')+' \u2713', true);
+    }
+  }catch(e){}
+}
+
+document.getElementById('shareBtn').addEventListener('click',shareProposal);
+document.getElementById('libBtn').addEventListener('click',()=>{ window.top.location.href='/voorstellen'; });
+
+const _loadProposal=loadProposal;
+loadProposal=async function(id){
+  await _loadProposal(id);
+  if(id){ const rec=lsAll()[id]; if(rec && rec.shareToken) checkSignedStatus(rec.shareToken); }
+};
+document.getElementById('savedSel').addEventListener('change',e=>loadProposal(e.target.value));
+
+/* ---------- prospect: ondertekenen ---------- */
+function renderSignPanel(signed, signerName){
+  const sb=document.getElementById('sidebar');
+  sb.className='signpanel';
+  if(signed){
+    sb.innerHTML=`<div class="signdone">Ondertekend \u2713<br><span style="font-weight:500">door ${esc(signerName||'')}</span></div>
+      <div class="intro" style="margin-top:12px">U kunt dit voorstel bewaren via Download PDF.</div>`;
+    return;
+  }
+  const defs=sigFieldDefs(S.docType==='partner').filter(f=>!f.sub && !f.image);
+  sb.innerHTML=`<div class="intro">Neem het voorstel door. Vul hieronder uw gegevens in, zet uw handtekening en verstuur. Uw gegevens verschijnen direct op de laatste pagina.</div>
+    <h3>Uw gegevens</h3>
+    ${defs.map(f=>`<div class="fld"><label>${f.label.replace(':','')}</label><input data-sigin="${f.key}" value="${esc((S.sig||{})[f.key]||'')}"></div>`).join('')}
+    <h3>Handtekening</h3>
+    <canvas id="sigpad" width="560" height="220"></canvas>
+    <div class="row"><button class="btn ghost" id="sigClear">Wissen</button>
+    <button class="btn primary" id="sigSubmit">Onderteken en verstuur</button></div>
+    <div class="msg" id="sigMsg"></div>`;
+
+  sb.querySelectorAll('input[data-sigin]').forEach(el=>{
+    el.addEventListener('input',()=>{ S.sig=S.sig||{}; S.sig[el.dataset.sigin]=el.value; renderPreview(); });
+  });
+
+  const cv=sb.querySelector('#sigpad'), ctx=cv.getContext('2d');
+  ctx.lineWidth=3; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#1A1517';
+  let drawing=false, dirty=false;
+  const pos=e=>{ const r=cv.getBoundingClientRect(); return [ (e.clientX-r.left)*(cv.width/r.width), (e.clientY-r.top)*(cv.height/r.height) ]; };
+  cv.addEventListener('pointerdown',e=>{ drawing=true; dirty=true; cv.setPointerCapture(e.pointerId); const [x,y]=pos(e); ctx.beginPath(); ctx.moveTo(x,y); });
+  cv.addEventListener('pointermove',e=>{ if(!drawing) return; const [x,y]=pos(e); ctx.lineTo(x,y); ctx.stroke(); });
+  cv.addEventListener('pointerup',()=>{ drawing=false; S.signature=cv.toDataURL('image/png'); renderPreview(); });
+  sb.querySelector('#sigClear').addEventListener('click',()=>{ ctx.clearRect(0,0,cv.width,cv.height); dirty=false; S.signature=null; renderPreview(); });
+
+  const msg=sb.querySelector('#sigMsg');
+  sb.querySelector('#sigSubmit').addEventListener('click',async()=>{
+    const f=S.sig||{};
+    const missing=[];
+    if(!(f.bedrijfsnaam||'').trim()) missing.push('bedrijfsnaam');
+    if(!(f.contactnaam||'').trim()) missing.push('voor- en achternaam');
+    if(!(f.email||'').trim()) missing.push('e-mailadres');
+    if(!dirty) missing.push('handtekening');
+    if(missing.length){ msg.className='msg'; msg.textContent='Vul nog in: '+missing.join(', '); return; }
+    const btn=sb.querySelector('#sigSubmit'); btn.disabled=true;
+    msg.className='msg'; msg.textContent='Versturen\u2026';
+    try{
+      const res=await fetch(API+'/sign',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({token:SIGN_TOKEN, fields:f, signatureImage:cv.toDataURL('image/png'), signerName:f.contactnaam})});
+      const out=await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(out.error||'mislukt');
+      renderSignPanel(true, f.contactnaam);
+    }catch(e){
+      btn.disabled=false;
+      msg.className='msg';
+      msg.textContent = e && e.message==='already signed' ? 'Dit voorstel is al ondertekend.' : 'Versturen mislukt \u2014 probeer opnieuw.';
+    }
+  });
+}
+
+async function bootSign(){
+  document.body.classList.add('signmode');
+  const sb=document.getElementById('sidebar');
+  sb.className='signpanel';
+  sb.innerHTML='<div class="intro">Voorstel laden\u2026</div>';
+  try{
+    const res=await fetch(API+'?token='+encodeURIComponent(SIGN_TOKEN));
+    if(!res.ok) throw new Error('nf');
+    const d=await res.json();
+    restoreState(JSON.parse(d.payload));
+    S.sig=S.sig||{};
+    const signed = d.status==='signed' && d.signature;
+    if(signed){ S.sig=d.signature.fields||{}; S.signature=d.signature.signatureImage||null; }
+    renderPreview();
+    renderSignPanel(!!signed, signed?d.signature.signerName:'');
+  }catch(e){
+    sb.innerHTML='<div class="intro">Dit voorstel is niet (meer) beschikbaar. Vraag de afzender om een nieuwe link.</div>';
+  }
+}
+
+if(SIGN_TOKEN){
+  bootSign();
+} else {
+  renderAll();
+  initStore();
+}
 </script>
 </body>
 </html>
