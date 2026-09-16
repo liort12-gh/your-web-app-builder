@@ -10,33 +10,88 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VoorstellenRouteImport } from './routes/voorstellen'
+import { Route as SignTokenRouteImport } from './routes/sign.$token'
+import { Route as ApiPublicProposalsRouteImport } from './routes/api/public/proposals'
+import { Route as ApiPublicProposalsSignRouteImport } from './routes/api/public/proposals.sign'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VoorstellenRoute = VoorstellenRouteImport.update({
+  id: '/voorstellen',
+  path: '/voorstellen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignTokenRoute = SignTokenRouteImport.update({
+  id: '/sign/$token',
+  path: '/sign/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicProposalsRoute = ApiPublicProposalsRouteImport.update({
+  id: '/api/public/proposals',
+  path: '/api/public/proposals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicProposalsSignRoute = ApiPublicProposalsSignRouteImport.update({
+  id: '/sign',
+  path: '/sign',
+  getParentRoute: () => ApiPublicProposalsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/voorstellen': typeof VoorstellenRoute
+  '/sign/$token': typeof SignTokenRoute
+  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
+  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/voorstellen': typeof VoorstellenRoute
+  '/sign/$token': typeof SignTokenRoute
+  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
+  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/voorstellen': typeof VoorstellenRoute
+  '/sign/$token': typeof SignTokenRoute
+  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
+  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/voorstellen'
+    | '/sign/$token'
+    | '/api/public/proposals'
+    | '/api/public/proposals/sign'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/voorstellen'
+    | '/sign/$token'
+    | '/api/public/proposals'
+    | '/api/public/proposals/sign'
+  id:
+    | '__root__'
+    | '/'
+    | '/voorstellen'
+    | '/sign/$token'
+    | '/api/public/proposals'
+    | '/api/public/proposals/sign'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  VoorstellenRoute: typeof VoorstellenRoute
+  SignTokenRoute: typeof SignTokenRoute
+  ApiPublicProposalsRoute: typeof ApiPublicProposalsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +103,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/voorstellen': {
+      id: '/voorstellen'
+      path: '/voorstellen'
+      fullPath: '/voorstellen'
+      preLoaderRoute: typeof VoorstellenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign/$token': {
+      id: '/sign/$token'
+      path: '/sign/$token'
+      fullPath: '/sign/$token'
+      preLoaderRoute: typeof SignTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/proposals': {
+      id: '/api/public/proposals'
+      path: '/api/public/proposals'
+      fullPath: '/api/public/proposals'
+      preLoaderRoute: typeof ApiPublicProposalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/proposals/sign': {
+      id: '/api/public/proposals/sign'
+      path: '/sign'
+      fullPath: '/api/public/proposals/sign'
+      preLoaderRoute: typeof ApiPublicProposalsSignRouteImport
+      parentRoute: typeof ApiPublicProposalsRoute
+    }
   }
 }
 
+interface ApiPublicProposalsRouteChildren {
+  ApiPublicProposalsSignRoute: typeof ApiPublicProposalsSignRoute
+}
+
+const ApiPublicProposalsRouteChildren: ApiPublicProposalsRouteChildren = {
+  ApiPublicProposalsSignRoute: ApiPublicProposalsSignRoute,
+}
+
+const ApiPublicProposalsRouteWithChildren =
+  ApiPublicProposalsRoute._addFileChildren(ApiPublicProposalsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  VoorstellenRoute: VoorstellenRoute,
+  SignTokenRoute: SignTokenRoute,
+  ApiPublicProposalsRoute: ApiPublicProposalsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
