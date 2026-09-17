@@ -161,7 +161,7 @@ h3.posh{font-size:10pt;font-weight:700;margin:3mm 0 1.5mm}
 /* ============ SIGN MODE (prospect) ============ */
 body.signmode #docTypeSeg,body.signmode #savedSel,body.signmode #saveBtn,body.signmode #saveAsBtn,
 body.signmode #delBtn,body.signmode #resetBtn,body.signmode #shareBtn,body.signmode #pdfBtn,
-body.signmode #htmlBtn,body.signmode #libBtn{display:none!important}
+body.signmode #htmlBtn,body.signmode #libBtn,body.signmode #calcBtn{display:none!important}
 .signpanel h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8A97A0;margin:16px 0 8px}
 .signpanel h3:first-child{margin-top:2px}
 .signpanel .intro{font:500 12px 'Inter';color:#5A6B76;line-height:1.55;background:#F5FAFD;border-radius:8px;padding:10px;margin-bottom:12px}
@@ -179,6 +179,23 @@ body.signmode #htmlBtn,body.signmode #libBtn{display:none!important}
 #shareModal input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:500 12.5px 'Inter';margin-bottom:12px}
 #shareModal .acts{display:flex;gap:8px;justify-content:flex-end}
 .sigsub{font:700 9pt 'Inter';color:var(--msp-cyan2);margin:4mm 0 1mm;grid-column:1/3}
+
+/* ============ CALC MODAL ============ */
+#calcModal{position:fixed;inset:0;background:rgba(11,54,82,.45);display:flex;align-items:center;justify-content:center;z-index:50}
+#calcModal .box{background:#fff;border-radius:12px;padding:22px;width:min(680px,94vw);max-height:88vh;overflow:auto;box-shadow:0 18px 50px rgba(10,40,60,.3)}
+#calcModal h4{font:800 15px 'Inter';color:var(--msp-navy);margin-bottom:6px}
+#calcModal .lead{font:500 12px 'Inter';color:#5A6B76;line-height:1.55;margin-bottom:12px}
+#calcModal table{width:100%;border-collapse:collapse;margin:10px 0}
+#calcModal th{font:700 10.5px 'Inter';color:var(--msp-cyan2);text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+#calcModal th.r,#calcModal td.r{text-align:right}
+#calcModal td{font:500 12px 'Inter';color:#1A1517;padding:5px 6px;border-bottom:1px solid #EEF1F3;vertical-align:middle}
+#calcModal td.rate{color:#5A6B76;white-space:nowrap}
+#calcModal input{width:100%;border:1px solid var(--line);border-radius:7px;padding:6px 8px;font:500 12px 'Inter';text-align:right}
+#calcModal input.aov{width:140px;text-align:left}
+#calcModal .rev{font-weight:700;white-space:nowrap}
+#calcModal .total td{font:800 13px 'Inter';color:var(--msp-navy);border-top:2px solid var(--msp-navy);border-bottom:none;padding-top:8px}
+#calcModal .note{font:500 11px 'Inter';color:#8A97A0;line-height:1.5;margin-top:8px}
+#calcModal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 
 /* ============ PRINT ============ */
 @page{size:A4;margin:0}
@@ -211,6 +228,7 @@ html,body,*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     <button class="btn ghost" id="delBtn" title="Verwijder het geopende voorstel">Verwijder</button>
     <span id="saveState" class="savestate"></span>
     <div class="right">
+      <button class="btn ghost" id="calcBtn" title="Schat de maandelijkse omzet uit deze tarieven">Bereken omzet</button>
       <button class="btn ghost" id="libBtn" title="Overzicht van verstuurde voorstellen">Overzicht</button>
       <button class="btn ghost" id="shareBtn" title="Maak een link voor de prospect om te ondertekenen">Deel met prospect</button>
       <button class="btn ghost" id="resetBtn">Reset</button>
@@ -1435,6 +1453,60 @@ async function checkSignedStatus(token){
 }
 
 document.getElementById('shareBtn').addEventListener('click',shareProposal);
+
+/* ---------- omzetcalculator ---------- */
+function rateParts(r){
+  const shown=(r.key==='applepay'||r.key==='googlepay')?r.price:composePrice(r.price);
+  if(!shown || /aanvraag|all-?incl/i.test(shown)) return null;
+  let fixed=null,pct=null;
+  const fm=shown.match(/€\s*(\d+(?:[.,]\d+)?)/);
+  if(fm) fixed=parseFloat(fm[1].replace(',','.'));
+  const pm=shown.match(/(\d+(?:[.,]\d+)?)\s*%/);
+  if(pm) pct=parseFloat(pm[1].replace(',','.'));
+  if((fixed==null||isNaN(fixed))&&(pct==null||isNaN(pct))) return null;
+  return {fixed:fixed||0,pct:pct||0,shown,ic:/ic\+\+/i.test(shown)};
+}
+function parseNumInput(v){
+  if(!v) return null;
+  const n=parseFloat(String(v).replace(/[€\s.]/g,'').replace(',','.').replace(/[^\d.]/g,''));
+  return isNaN(n)?null:n;
+}
+function fmtEur(n){ return '€ '+n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function openCalc(){
+  const rows=S.rows.map((r,i)=>({r,i,parts:r.on?rateParts(r):null})).filter(x=>x.parts);
+  const modal=document.createElement('div');
+  modal.id='calcModal';
+  let h=`<div class="box"><h4>Omzetcalculator</h4>
+    <div class="lead">Schat de maandelijkse omzet uit de tarieven in dit voorstel. Alleen betaalmethoden met een ingevuld tarief staan in de lijst. Vul per methode het aantal transacties per maand in, plus één gemiddelde orderwaarde. Deze berekening komt niet in het voorstel of de PDF terecht.</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><label style="font:600 12px 'Inter';color:#5A6B76">Gemiddelde orderwaarde (€)</label><input class="aov" id="calcAov" placeholder="bijv. 85,00"></div>
+    <table><thead><tr><th>Betaalmethode</th><th>Tarief</th><th class="r">Transacties / mnd</th><th class="r">Omzet / mnd</th></tr></thead><tbody>`;
+  for(const x of rows){
+    h+=`<tr><td>${esc(x.r.name)}${x.parts.ic?' <span title="IC++: alleen de opslag is meegerekend" style="color:#8A97A0">*</span>':''}</td><td class="rate">${esc(x.parts.shown)}</td><td class="r" style="width:130px"><input data-calctx="${x.i}" inputmode="numeric" placeholder="0"></td><td class="r rev" data-calcrev="${x.i}">—</td></tr>`;
+  }
+  h+=`<tr class="total"><td colspan="3">Totaal geschatte omzet per maand</td><td class="r" id="calcTotal">—</td></tr></tbody></table>
+    <div class="note">Berekening per transactie: vast tarief + percentage × gemiddelde orderwaarde. * Bij IC++-tarieven is alleen de opslag (markup) meegerekend; interchange- en scheme fees zijn doorbelasting. Indicatie, geen garantie.</div>
+    <div class="acts"><button class="btn ghost" id="calcClose">Sluiten</button></div></div>`;
+  modal.innerHTML=h;
+  modal.addEventListener('click',e=>{ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+  const recalc=()=>{
+    const aov=parseNumInput(document.getElementById('calcAov').value)||0;
+    let total=0, any=false;
+    for(const x of rows){
+      const inp=modal.querySelector(`[data-calctx="${x.i}"]`);
+      const tx=parseNumInput(inp.value)||0;
+      const rev=tx*(x.parts.fixed + x.parts.pct/100*aov);
+      if(tx>0) any=true;
+      total+=rev;
+      modal.querySelector(`[data-calcrev="${x.i}"]`).textContent=tx>0?fmtEur(rev):'—';
+    }
+    document.getElementById('calcTotal').textContent=any?fmtEur(total):'—';
+  };
+  modal.querySelectorAll('input').forEach(i=>i.addEventListener('input',recalc));
+  document.getElementById('calcClose').addEventListener('click',()=>modal.remove());
+  recalc();
+}
+document.getElementById('calcBtn').addEventListener('click',openCalc);
 document.getElementById('libBtn').addEventListener('click',()=>{ window.top.location.href='/voorstellen'; });
 
 const _loadProposal=loadProposal;
