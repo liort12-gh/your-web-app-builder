@@ -797,6 +797,7 @@ function renderPreview(){
       el.textContent=/aanvraag/i.test(raw)?'':raw; });
     el.addEventListener('blur',()=>{ const i=+el.dataset.price;
       let v=el.textContent.trim(); if(v==='') v='Prijs op aanvraag';
+      else if(!/%/.test(v) && !/^€/.test(v) && /^\d/.test(v)) v='€ '+v;
       S.rows[i].price=v;
       el.classList.toggle('poa', /aanvraag/i.test(v)); syncCard(el, v);
       const rr=S.rows[i]; el.textContent=(rr.key==='applepay'||rr.key==='googlepay')?rr.price:composePrice(rr.price); });
