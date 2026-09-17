@@ -1453,6 +1453,60 @@ async function checkSignedStatus(token){
 }
 
 document.getElementById('shareBtn').addEventListener('click',shareProposal);
+
+/* ---------- omzetcalculator ---------- */
+function rateParts(r){
+  const shown=(r.key==='applepay'||r.key==='googlepay')?r.price:composePrice(r.price);
+  if(!shown || /aanvraag|all-?incl/i.test(shown)) return null;
+  let fixed=null,pct=null;
+  const fm=shown.match(/€\s*(\d+(?:[.,]\d+)?)/);
+  if(fm) fixed=parseFloat(fm[1].replace(',','.'));
+  const pm=shown.match(/(\d+(?:[.,]\d+)?)\s*%/);
+  if(pm) pct=parseFloat(pm[1].replace(',','.'));
+  if((fixed==null||isNaN(fixed))&&(pct==null||isNaN(pct))) return null;
+  return {fixed:fixed||0,pct:pct||0,shown,ic:/ic\+\+/i.test(shown)};
+}
+function parseNumInput(v){
+  if(!v) return null;
+  const n=parseFloat(String(v).replace(/[€\s.]/g,'').replace(',','.').replace(/[^\d.]/g,''));
+  return isNaN(n)?null:n;
+}
+function fmtEur(n){ return '€ '+n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function openCalc(){
+  const rows=S.rows.map((r,i)=>({r,i,parts:r.on?rateParts(r):null})).filter(x=>x.parts);
+  const modal=document.createElement('div');
+  modal.id='calcModal';
+  let h=`<div class="box"><h4>Omzetcalculator</h4>
+    <div class="lead">Schat de maandelijkse omzet uit de tarieven in dit voorstel. Alleen betaalmethoden met een ingevuld tarief staan in de lijst. Vul per methode het aantal transacties per maand in, plus één gemiddelde orderwaarde. Deze berekening komt niet in het voorstel of de PDF terecht.</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><label style="font:600 12px 'Inter';color:#5A6B76">Gemiddelde orderwaarde (€)</label><input class="aov" id="calcAov" placeholder="bijv. 85,00"></div>
+    <table><thead><tr><th>Betaalmethode</th><th>Tarief</th><th class="r">Transacties / mnd</th><th class="r">Omzet / mnd</th></tr></thead><tbody>`;
+  for(const x of rows){
+    h+=`<tr><td>${esc(x.r.name)}${x.parts.ic?' <span title="IC++: alleen de opslag is meegerekend" style="color:#8A97A0">*</span>':''}</td><td class="rate">${esc(x.parts.shown)}</td><td class="r" style="width:130px"><input data-calctx="${x.i}" inputmode="numeric" placeholder="0"></td><td class="r rev" data-calcrev="${x.i}">—</td></tr>`;
+  }
+  h+=`<tr class="total"><td colspan="3">Totaal geschatte omzet per maand</td><td class="r" id="calcTotal">—</td></tr></tbody></table>
+    <div class="note">Berekening per transactie: vast tarief + percentage × gemiddelde orderwaarde. * Bij IC++-tarieven is alleen de opslag (markup) meegerekend; interchange- en scheme fees zijn doorbelasting. Indicatie, geen garantie.</div>
+    <div class="acts"><button class="btn ghost" id="calcClose">Sluiten</button></div></div>`;
+  modal.innerHTML=h;
+  modal.addEventListener('click',e=>{ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+  const recalc=()=>{
+    const aov=parseNumInput(document.getElementById('calcAov').value)||0;
+    let total=0, any=false;
+    for(const x of rows){
+      const inp=modal.querySelector(`[data-calctx="${x.i}"]`);
+      const tx=parseNumInput(inp.value)||0;
+      const rev=tx*(x.parts.fixed + x.parts.pct/100*aov);
+      if(tx>0) any=true;
+      total+=rev;
+      modal.querySelector(`[data-calcrev="${x.i}"]`).textContent=tx>0?fmtEur(rev):'—';
+    }
+    document.getElementById('calcTotal').textContent=any?fmtEur(total):'—';
+  };
+  modal.querySelectorAll('input').forEach(i=>i.addEventListener('input',recalc));
+  document.getElementById('calcClose').addEventListener('click',()=>modal.remove());
+  recalc();
+}
+document.getElementById('calcBtn').addEventListener('click',openCalc);
 document.getElementById('libBtn').addEventListener('click',()=>{ window.top.location.href='/voorstellen'; });
 
 const _loadProposal=loadProposal;
