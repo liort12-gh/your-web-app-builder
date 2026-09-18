@@ -347,7 +347,7 @@ function renderSidebar(){
   <h3>Pagina's</h3>`;
   const pageDefs=[['cover','Voorblad'],['product','Acquirer & integraties'],['benefits','Verbeter uw business'],
     ['agreement', isP?'Samenwerkingsvoorstel (artikelen)':'Samenwerkingsovereenkomst'],['financieel','Financieel voorstel'],
-    ['notes','Aanvullende afspraken'],['tabel',isP?'Tarief ECOM transacties':'Tarieven per betaalmethode'],...(isP?[['pos','Tarief POS transacties']]:[]),['sig','Ondertekening']];
+    ['notes','Aanvullende afspraken'],['tabel',isP?'Tarief ECOM transacties':'Tarieven per betaalmethode'],['pos','Tarief POS transacties'],['sig','Ondertekening']];
   for(const [k,l] of pageDefs) h+=`<label class="chk"><input type="checkbox" data-p="${k}" ${S.pages[k]?'checked':''}> ${l}</label>`;
   h+=`<h3>Betaalmethoden</h3>`;
   let cat='';
