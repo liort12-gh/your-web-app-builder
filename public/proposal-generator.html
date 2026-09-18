@@ -782,7 +782,7 @@ function renderPreview(){
   if(S.docType==='partner' && S.pages.agreement) h+=pgAgreement();
   if(S.pages.financieel) h+=pgFinancieel();
   if(S.pages.tabel) h+=pgTabel();
-  if(S.docType==='partner' && S.pages.pos) h+=pgPos();
+  if(S.pages.pos) h+=pgPos();
   if(S.docType==='merchant' && S.pages.agreement) h+=pgAgreement();
   if(S.pages.sig) h+=pgSig();
   pv.innerHTML=h;
