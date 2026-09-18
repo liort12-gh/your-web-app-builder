@@ -343,11 +343,11 @@ function renderSidebar(){
     ${isP?'':`<div class="fld"><label>Voorstel geldig tot</label><input data-f="geldig" value="${esc(F.geldig)}" placeholder="bijv. 30-09-2026"></div>`}
     <div class="fld"><label>Contractperiode</label><input data-f="periode" value="${esc(F.periode)}"></div>
     ${isP?`<div class="fld"><label>Gemaakt door</label><input data-f="auteur" value="${esc(F.auteur)}"></div>`:''}
-  ${isP?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
+  ${(isP||S.pages.pos)?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
   <h3>Pagina's</h3>`;
   const pageDefs=[['cover','Voorblad'],['product','Acquirer & integraties'],['benefits','Verbeter uw business'],
     ['agreement', isP?'Samenwerkingsvoorstel (artikelen)':'Samenwerkingsovereenkomst'],['financieel','Financieel voorstel'],
-    ['notes','Aanvullende afspraken'],['tabel',isP?'Tarief ECOM transacties':'Tarieven per betaalmethode'],...(isP?[['pos','Tarief POS transacties']]:[]),['sig','Ondertekening']];
+    ['notes','Aanvullende afspraken'],['tabel',isP?'Tarief ECOM transacties':'Tarieven per betaalmethode'],['pos','Tarief POS transacties'],['sig','Ondertekening']];
   for(const [k,l] of pageDefs) h+=`<label class="chk"><input type="checkbox" data-p="${k}" ${S.pages[k]?'checked':''}> ${l}</label>`;
   h+=`<h3>Betaalmethoden</h3>`;
   let cat='';
@@ -359,7 +359,7 @@ function renderSidebar(){
   h+=`<div class="hint">Klik op tekst in het voorbeeld (prijzen, titels, alinea's) om deze direct te bewerken. Grijze prijzen = "Prijs op aanvraag"; typ een bedrag en de rij kleurt zwart. Tarieven per betaalmethode voer je in excl. transactiekosten — de tabel toont automatisch het gecombineerde tarief (klik op een prijs om het kale tarief te bewerken).</div>`;
   sb.innerHTML=h;
   sb.querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('input',e=>{S.fields[el.dataset.f]=el.value; renderPreview();}));
-  sb.querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('change',()=>{S.pages[el.dataset.p]=el.checked; renderPreview();}));
+  sb.querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('change',()=>{S.pages[el.dataset.p]=el.checked; if(el.dataset.p==='pos'){renderSidebar();} renderPreview();}));
   sb.querySelectorAll('input[data-r]').forEach(el=>el.addEventListener('change',()=>{S.rows[el.dataset.r].on=el.checked; syncCatBoxes(); renderPreview();}));
   sb.querySelectorAll('input[data-cat]').forEach(el=>{
     el.addEventListener('change',()=>{
@@ -782,7 +782,7 @@ function renderPreview(){
   if(S.docType==='partner' && S.pages.agreement) h+=pgAgreement();
   if(S.pages.financieel) h+=pgFinancieel();
   if(S.pages.tabel) h+=pgTabel();
-  if(S.docType==='partner' && S.pages.pos) h+=pgPos();
+  if(S.pages.pos) h+=pgPos();
   if(S.docType==='merchant' && S.pages.agreement) h+=pgAgreement();
   if(S.pages.sig) h+=pgSig();
   pv.innerHTML=h;
@@ -870,7 +870,7 @@ function renderAll(){
 
 document.querySelectorAll('#docTypeSeg button').forEach(b=>b.addEventListener('click',()=>{
   S.docType=b.dataset.dt;
-  S.pages.pos=(S.docType==='partner');
+  if(S.docType==='partner') S.pages.pos=true;   // merchant: keep the user's own POS keuze
   if(S.docType==='partner') S.rows.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; });
   if(S.docType==='partner' && S.fields.txkosten==='€ 0,05') S.fields.txkosten='€ 0,10';
   if(S.docType==='merchant' && S.fields.txkosten==='€ 0,10') S.fields.txkosten='€ 0,05';
