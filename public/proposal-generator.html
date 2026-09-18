@@ -870,7 +870,7 @@ function renderAll(){
 
 document.querySelectorAll('#docTypeSeg button').forEach(b=>b.addEventListener('click',()=>{
   S.docType=b.dataset.dt;
-  S.pages.pos=(S.docType==='partner');
+  if(S.docType==='partner') S.pages.pos=true;   // merchant: keep the user's own POS keuze
   if(S.docType==='partner') S.rows.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; });
   if(S.docType==='partner' && S.fields.txkosten==='€ 0,05') S.fields.txkosten='€ 0,10';
   if(S.docType==='merchant' && S.fields.txkosten==='€ 0,10') S.fields.txkosten='€ 0,05';
