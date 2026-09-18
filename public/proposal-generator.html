@@ -343,7 +343,7 @@ function renderSidebar(){
     ${isP?'':`<div class="fld"><label>Voorstel geldig tot</label><input data-f="geldig" value="${esc(F.geldig)}" placeholder="bijv. 30-09-2026"></div>`}
     <div class="fld"><label>Contractperiode</label><input data-f="periode" value="${esc(F.periode)}"></div>
     ${isP?`<div class="fld"><label>Gemaakt door</label><input data-f="auteur" value="${esc(F.auteur)}"></div>`:''}
-  ${isP?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
+  ${(isP||S.pages.pos)?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
   <h3>Pagina's</h3>`;
   const pageDefs=[['cover','Voorblad'],['product','Acquirer & integraties'],['benefits','Verbeter uw business'],
     ['agreement', isP?'Samenwerkingsvoorstel (artikelen)':'Samenwerkingsovereenkomst'],['financieel','Financieel voorstel'],
