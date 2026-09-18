@@ -359,7 +359,7 @@ function renderSidebar(){
   h+=`<div class="hint">Klik op tekst in het voorbeeld (prijzen, titels, alinea's) om deze direct te bewerken. Grijze prijzen = "Prijs op aanvraag"; typ een bedrag en de rij kleurt zwart. Tarieven per betaalmethode voer je in excl. transactiekosten — de tabel toont automatisch het gecombineerde tarief (klik op een prijs om het kale tarief te bewerken).</div>`;
   sb.innerHTML=h;
   sb.querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('input',e=>{S.fields[el.dataset.f]=el.value; renderPreview();}));
-  sb.querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('change',()=>{S.pages[el.dataset.p]=el.checked; renderPreview();}));
+  sb.querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('change',()=>{S.pages[el.dataset.p]=el.checked; if(el.dataset.p==='pos'){renderSidebar();} renderPreview();}));
   sb.querySelectorAll('input[data-r]').forEach(el=>el.addEventListener('change',()=>{S.rows[el.dataset.r].on=el.checked; syncCatBoxes(); renderPreview();}));
   sb.querySelectorAll('input[data-cat]').forEach(el=>{
     el.addEventListener('change',()=>{
