@@ -304,7 +304,7 @@ function defaultState(dt){
       retrieval:'€ 5,00', chargeback:'€ 25,00', reversal:'€ 1,00', moi:'€ 60,00',
       notes:''
     },
-    pages:{cover:true, product:true, benefits:true, agreement:true, financieel:true, tabel:true, pos:(dt||'merchant')==='partner', sig:true, notes:false},
+    pages:{cover:true, product:false, benefits:false, agreement:false, financieel:true, tabel:true, pos:(dt||'merchant')==='partner', sig:true, notes:false},
     rows: (()=>{ const rs=baseRows(); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
     pos: {
       hw:[{name:'P2 Smartpad',def:'\u20ac 349,-',nieuw:false},{name:'P2 Lite SE',def:'\u20ac 299,-',nieuw:false},{name:'P3 H',def:'\u20ac 349,-',nieuw:true},{name:'P3 KH',def:'\u20ac 329,-',nieuw:true},{name:'P3 Air',def:'\u20ac 399,-',nieuw:true},{name:'P3 Mix + Docker',def:'\u20ac 749,-',nieuw:false}],
