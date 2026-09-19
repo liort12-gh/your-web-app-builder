@@ -119,6 +119,12 @@ function GeneratorPage() {
           srcDoc={html}
           title="MSP Proposal Generator"
           className="h-full w-full border-0"
+          onLoad={() => {
+            if (!openId) return;
+            window.setTimeout(() => {
+              frameRef.current?.contentWindow?.postMessage({ __mspOpen: openId }, "*");
+            }, 600);
+          }}
         />
       )}
     </main>
