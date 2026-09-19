@@ -38,6 +38,7 @@ type Op = "list" | "get" | "save" | "delete";
 
 function GeneratorPage() {
   const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const { open: openId } = Route.useSearch();
   const queryClient = useQueryClient();
 
   const fetchHtml = useServerFn(getGeneratorHtml);
