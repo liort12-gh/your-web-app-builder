@@ -1243,21 +1243,12 @@ async function saveProposal(asNew){
   const rec={ name, docType:S.docType, updatedAt:new Date().toISOString(), payload:JSON.stringify(snapshotState()) };
   flash('Opslaan\u2026');
   try{
-    if(DB){
-      try{
-        await DB.doc('proposals/'+id).set(rec);
-        CUR=id; await refreshSaved();
-        flash('Opgeslagen (gedeeld) \u2713', true);
-        return;
-      }catch(e){
-        // Read-only / no write access — fall back to this browser
-        if(e && (e.code==='not_writer' || e.code==='not_granted')){
-          lsPut(id, rec); CUR=id; await refreshSaved();
-          flash('Alleen-lezen \u2014 lokaal opgeslagen', true);
-          return;
-        }
-        throw e;
-      }
+    if(REMOTE){
+      await host('save',{id, name:rec.name, docType:rec.docType, payload:rec.payload});
+      CUR=id; await refreshSaved();
+      document.getElementById('savedSel').value=id;
+      flash('Opgeslagen \u2713', true);
+      return;
     }
     lsPut(id, rec);
     CUR=id; await refreshSaved();
@@ -1269,7 +1260,7 @@ async function loadProposal(id){
   flash('Laden\u2026');
   try{
     let rec=null;
-    if(DB){ const d=await DB.doc('proposals/'+id).get(); if(d.exists) rec=d.data(); }
+    if(REMOTE){ rec=await host('get',{id}); }
     if(!rec) rec=lsAll()[id];
     if(!rec){ flash('Niet gevonden'); return; }
     restoreState(JSON.parse(rec.payload));
@@ -1283,8 +1274,7 @@ async function deleteProposal(){
   const p=SAVED.find(x=>x.id===CUR);
   if(!confirm('"'+(p?p.name:'Dit voorstel')+'" verwijderen?')) return;
   try{
-    if(DB) await DB.doc('proposals/'+CUR).delete();
-    lsDel(CUR);
+    if(REMOTE){ await host('delete',{id:CUR}); } else { lsDel(CUR); }
     CUR=null; await refreshSaved(); flash('Verwijderd', true);
   }catch(e){ flash('Verwijderen mislukt'); }
 }
