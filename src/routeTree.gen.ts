@@ -14,8 +14,9 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as RequestAccessRouteImport } from './routes/request-access'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as VoorstellenRouteImport } from './routes/voorstellen'
 import { Route as AuthenticatedGeneratorRouteImport } from './routes/_authenticated/generator'
+import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedVoorstellenRouteImport } from './routes/_authenticated/voorstellen'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -41,32 +42,40 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VoorstellenRoute = VoorstellenRouteImport.update({
-  id: '/voorstellen',
-  path: '/voorstellen',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedGeneratorRoute = AuthenticatedGeneratorRouteImport.update({
   id: '/generator',
   path: '/generator',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVoorstellenRoute =
+  AuthenticatedVoorstellenRouteImport.update({
+    id: '/voorstellen',
+    path: '/voorstellen',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/request-access': typeof RequestAccessRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/voorstellen': typeof VoorstellenRoute
   '/generator': typeof AuthenticatedGeneratorRoute
+  '/team': typeof AuthenticatedTeamRoute
+  '/voorstellen': typeof AuthenticatedVoorstellenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/request-access': typeof RequestAccessRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/voorstellen': typeof VoorstellenRoute
   '/generator': typeof AuthenticatedGeneratorRoute
+  '/team': typeof AuthenticatedTeamRoute
+  '/voorstellen': typeof AuthenticatedVoorstellenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -75,8 +84,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/request-access': typeof RequestAccessRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/voorstellen': typeof VoorstellenRoute
   '/_authenticated/generator': typeof AuthenticatedGeneratorRoute
+  '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/voorstellen': typeof AuthenticatedVoorstellenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -85,16 +95,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/request-access'
     | '/reset-password'
-    | '/voorstellen'
     | '/generator'
+    | '/team'
+    | '/voorstellen'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/request-access'
     | '/reset-password'
-    | '/voorstellen'
     | '/generator'
+    | '/team'
+    | '/voorstellen'
   id:
     | '__root__'
     | '/'
@@ -102,8 +114,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/request-access'
     | '/reset-password'
-    | '/voorstellen'
     | '/_authenticated/generator'
+    | '/_authenticated/team'
+    | '/_authenticated/voorstellen'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -112,7 +125,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   RequestAccessRoute: typeof RequestAccessRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  VoorstellenRoute: typeof VoorstellenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,13 +164,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/voorstellen': {
-      id: '/voorstellen'
-      path: '/voorstellen'
-      fullPath: '/voorstellen'
-      preLoaderRoute: typeof VoorstellenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/generator': {
       id: '/_authenticated/generator'
       path: '/generator'
@@ -166,15 +171,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGeneratorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/team': {
+      id: '/_authenticated/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/voorstellen': {
+      id: '/_authenticated/voorstellen'
+      path: '/voorstellen'
+      fullPath: '/voorstellen'
+      preLoaderRoute: typeof AuthenticatedVoorstellenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedGeneratorRoute: typeof AuthenticatedGeneratorRoute
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedVoorstellenRoute: typeof AuthenticatedVoorstellenRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGeneratorRoute: AuthenticatedGeneratorRoute,
+  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedVoorstellenRoute: AuthenticatedVoorstellenRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -186,7 +209,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   RequestAccessRoute: RequestAccessRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  VoorstellenRoute: VoorstellenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1128,7 +1128,27 @@ async function deliverFile(filename, blob){
    Each proposal is one document: the whole editor state plus any text
    edited directly in the preview. Stored server-side when the artifact's
    store is available, otherwise in this browser. */
-let DB=null, CUR=null, SAVED=[];   // saves live in this browser only — never shared
+let DB=null, CUR=null, SAVED=[];
+/* Proposals are stored in the signed-in team member's own account. The host page
+   owns the authenticated connection; this document asks it over postMessage and
+   falls back to this browser when no host is present. */
+const HOST = (window.parent && window.parent!==window) ? window.parent : null;
+let REMOTE=false, RPC_N=0; const RPC={};
+function host(op,payload){
+  if(!HOST) return Promise.reject(new Error('no host'));
+  return new Promise((res,rej)=>{
+    const id=++RPC_N; RPC[id]={res,rej};
+    HOST.postMessage({__msp:true,id,op,payload:payload||{}},'*');
+    setTimeout(()=>{ if(RPC[id]){ delete RPC[id]; rej(new Error('timeout')); } },20000);
+  });
+}
+window.addEventListener('message',ev=>{
+  const d=ev.data;
+  if(d && d.__mspOpen){ loadProposal(d.__mspOpen); return; }
+  if(!d || !d.__mspReply) return;
+  const p=RPC[d.id]; if(!p) return; delete RPC[d.id];
+  if(d.error) p.rej(new Error(d.error)); else p.res(d.result);
+});
 const LSKEY='msp_proposals_v1';
 let MEM={}, LS_OK=null;
 function lsUsable(){
