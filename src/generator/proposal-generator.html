@@ -1128,7 +1128,27 @@ async function deliverFile(filename, blob){
    Each proposal is one document: the whole editor state plus any text
    edited directly in the preview. Stored server-side when the artifact's
    store is available, otherwise in this browser. */
-let DB=null, CUR=null, SAVED=[];   // saves live in this browser only — never shared
+let DB=null, CUR=null, SAVED=[];
+/* Proposals are stored in the signed-in team member's own account. The host page
+   owns the authenticated connection; this document asks it over postMessage and
+   falls back to this browser when no host is present. */
+const HOST = (window.parent && window.parent!==window) ? window.parent : null;
+let REMOTE=false, RPC_N=0; const RPC={};
+function host(op,payload){
+  if(!HOST) return Promise.reject(new Error('no host'));
+  return new Promise((res,rej)=>{
+    const id=++RPC_N; RPC[id]={res,rej};
+    HOST.postMessage({__msp:true,id,op,payload:payload||{}},'*');
+    setTimeout(()=>{ if(RPC[id]){ delete RPC[id]; rej(new Error('timeout')); } },20000);
+  });
+}
+window.addEventListener('message',ev=>{
+  const d=ev.data;
+  if(d && d.__mspOpen){ loadProposal(d.__mspOpen); return; }
+  if(!d || !d.__mspReply) return;
+  const p=RPC[d.id]; if(!p) return; delete RPC[d.id];
+  if(d.error) p.rej(new Error(d.error)); else p.res(d.result);
+});
 const LSKEY='msp_proposals_v1';
 let MEM={}, LS_OK=null;
 function lsUsable(){
@@ -1180,31 +1200,25 @@ function restoreState(rec){
   applyEdits(rec.edits);
 }
 async function initStore(){
-  // Shared store: proposals live server-side and are visible to everyone
-  // who opens this artifact. Falls back to this browser if the store is
-  // unavailable (e.g. a read-only viewer, or store not granted).
-  DB=null;
+  // Account store: proposals are saved under the signed-in team member and are
+  // visible only to that member. Falls back to this browser when no host page
+  // is available (e.g. the standalone file).
+  DB=null; REMOTE=false;
   try{
-    DB = (window.claude && window.claude.use) ? await window.claude.use('db') : null;
-  }catch(e){ DB=null; }
-  if(DB){
-    try{
-      // Keep the saved-proposals list live: when a colleague adds, renames
-      // or deletes a proposal, everyone's dropdown updates automatically.
-      DB.collection('proposals').orderBy('updatedAt','desc').limit(200).onSnapshot(()=>{ refreshSaved(); });
-    }catch(e){}
-  }
+    await host('list');
+    REMOTE=true;
+  }catch(e){ REMOTE=false; }
   await refreshSaved();
 }
 async function refreshSaved(){
   SAVED=[];
-  if(DB){
+  if(REMOTE){
     try{
-      const snap=await DB.collection('proposals').orderBy('updatedAt','desc').limit(200).get();
-      snap.docs.forEach(d=>{ const v=d.data(); SAVED.push({id:d.id, name:v.name, docType:v.docType, updatedAt:v.updatedAt}); });
-    }catch(e){ DB=null; }
+      const rows=await host('list');
+      SAVED=(rows||[]).map(r=>({id:r.id,name:r.name,docType:r.docType,updatedAt:r.updatedAt}));
+    }catch(e){ REMOTE=false; }
   }
-  if(!DB){
+  if(!REMOTE){
     const a=lsAll();
     SAVED=Object.keys(a).map(id=>({id, name:a[id].name, docType:a[id].docType, updatedAt:a[id].updatedAt}))
       .sort((x,y)=>String(y.updatedAt).localeCompare(String(x.updatedAt)));
@@ -1229,21 +1243,12 @@ async function saveProposal(asNew){
   const rec={ name, docType:S.docType, updatedAt:new Date().toISOString(), payload:JSON.stringify(snapshotState()) };
   flash('Opslaan\u2026');
   try{
-    if(DB){
-      try{
-        await DB.doc('proposals/'+id).set(rec);
-        CUR=id; await refreshSaved();
-        flash('Opgeslagen (gedeeld) \u2713', true);
-        return;
-      }catch(e){
-        // Read-only / no write access — fall back to this browser
-        if(e && (e.code==='not_writer' || e.code==='not_granted')){
-          lsPut(id, rec); CUR=id; await refreshSaved();
-          flash('Alleen-lezen \u2014 lokaal opgeslagen', true);
-          return;
-        }
-        throw e;
-      }
+    if(REMOTE){
+      await host('save',{id, name:rec.name, docType:rec.docType, payload:rec.payload});
+      CUR=id; await refreshSaved();
+      document.getElementById('savedSel').value=id;
+      flash('Opgeslagen \u2713', true);
+      return;
     }
     lsPut(id, rec);
     CUR=id; await refreshSaved();
@@ -1255,7 +1260,7 @@ async function loadProposal(id){
   flash('Laden\u2026');
   try{
     let rec=null;
-    if(DB){ const d=await DB.doc('proposals/'+id).get(); if(d.exists) rec=d.data(); }
+    if(REMOTE){ rec=await host('get',{id}); }
     if(!rec) rec=lsAll()[id];
     if(!rec){ flash('Niet gevonden'); return; }
     restoreState(JSON.parse(rec.payload));
@@ -1269,8 +1274,7 @@ async function deleteProposal(){
   const p=SAVED.find(x=>x.id===CUR);
   if(!confirm('"'+(p?p.name:'Dit voorstel')+'" verwijderen?')) return;
   try{
-    if(DB) await DB.doc('proposals/'+CUR).delete();
-    lsDel(CUR);
+    if(REMOTE){ await host('delete',{id:CUR}); } else { lsDel(CUR); }
     CUR=null; await refreshSaved(); flash('Verwijderd', true);
   }catch(e){ flash('Verwijderen mislukt'); }
 }
