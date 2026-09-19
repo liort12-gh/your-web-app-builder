@@ -1053,7 +1053,11 @@ function renderPreview(){
 }
 
 function renderAll(){
-  document.querySelectorAll('#docTypeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.dt===S.docType));
+  document.querySelectorAll('#docTypeSeg button').forEach(b=>{
+    const active=b.dataset.dt===S.docType;
+    b.classList.toggle('on',active);
+    b.setAttribute('aria-pressed',String(active));
+  });
   renderSidebar(); renderPreview();
 }
 
@@ -1066,7 +1070,25 @@ document.querySelectorAll('#docTypeSeg button').forEach(b=>b.addEventListener('c
   if(S.docType==='merchant' && S.fields.txkosten==='€ 0,10') S.fields.txkosten='€ 0,05';
   renderAll();
 }));
-document.getElementById('resetBtn').addEventListener('click',()=>{ S=defaultState(S.docType); renderAll(); });
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Alle invoer van dit voorstel resetten?')) return;
+  S=defaultState(S.docType); renderAll();
+});
+const actionMenus=[...document.querySelectorAll('#topbar details.menu')];
+function closeActionMenus(except){ actionMenus.forEach(menu=>{ if(menu!==except) menu.open=false; }); }
+actionMenus.forEach(menu=>{
+  menu.addEventListener('toggle',()=>{ if(menu.open) closeActionMenus(menu); });
+  menu.querySelectorAll('.menu-pop button').forEach(button=>button.addEventListener('click',()=>{ menu.open=false; }));
+});
+document.addEventListener('click',event=>{
+  if(!event.target.closest('#topbar details.menu')) closeActionMenus();
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'){
+    const openMenu=actionMenus.find(menu=>menu.open);
+    if(openMenu){ openMenu.open=false; openMenu.querySelector('summary')?.focus(); }
+  }
+});
 /* deliver a generated file — tries every route a viewer's browser allows */
 async function deliverFile(filename, blob){
   let dl=null;
