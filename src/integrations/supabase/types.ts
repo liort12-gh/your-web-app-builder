@@ -16,9 +16,11 @@ export type Database = {
     Tables: {
       proposals: {
         Row: {
+          client_id: string | null
           created_at: string
           doc_type: string
           id: string
+          owner_id: string | null
           payload: Json
           share_token: string
           signature: Json | null
@@ -28,11 +30,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          client_id?: string | null
           created_at?: string
           doc_type?: string
           id?: string
+          owner_id?: string | null
           payload: Json
-          share_token: string
+          share_token?: string
           signature?: Json | null
           signed_at?: string | null
           status?: string
@@ -40,9 +44,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          client_id?: string | null
           created_at?: string
           doc_type?: string
           id?: string
+          owner_id?: string | null
           payload?: Json
           share_token?: string
           signature?: Json | null
@@ -53,15 +59,43 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          created_at: string
+          email: string
+          is_owner: boolean
+          status: Database["public"]["Enums"]["member_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          is_owner?: boolean
+          status?: Database["public"]["Enums"]["member_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          is_owner?: boolean
+          status?: Database["public"]["Enums"]["member_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_app_owner: { Args: { _user_id: string }; Returns: boolean }
+      is_approved_member: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      member_status: "pending" | "approved" | "rejected" | "deactivated"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -188,6 +222,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      member_status: ["pending", "approved", "rejected", "deactivated"],
+    },
   },
 } as const

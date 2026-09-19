@@ -10,14 +10,35 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as RequestAccessRouteImport } from './routes/request-access'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as VoorstellenRouteImport } from './routes/voorstellen'
-import { Route as SignTokenRouteImport } from './routes/sign.$token'
-import { Route as ApiPublicProposalsRouteImport } from './routes/api/public/proposals'
-import { Route as ApiPublicProposalsSignRouteImport } from './routes/api/public/proposals.sign'
+import { Route as AuthenticatedGeneratorRouteImport } from './routes/_authenticated/generator'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequestAccessRoute = RequestAccessRouteImport.update({
+  id: '/request-access',
+  path: '/request-access',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VoorstellenRoute = VoorstellenRouteImport.update({
@@ -25,73 +46,73 @@ const VoorstellenRoute = VoorstellenRouteImport.update({
   path: '/voorstellen',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignTokenRoute = SignTokenRouteImport.update({
-  id: '/sign/$token',
-  path: '/sign/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicProposalsRoute = ApiPublicProposalsRouteImport.update({
-  id: '/api/public/proposals',
-  path: '/api/public/proposals',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicProposalsSignRoute = ApiPublicProposalsSignRouteImport.update({
-  id: '/sign',
-  path: '/sign',
-  getParentRoute: () => ApiPublicProposalsRoute,
+const AuthenticatedGeneratorRoute = AuthenticatedGeneratorRouteImport.update({
+  id: '/generator',
+  path: '/generator',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/request-access': typeof RequestAccessRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/voorstellen': typeof VoorstellenRoute
-  '/sign/$token': typeof SignTokenRoute
-  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
-  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
+  '/generator': typeof AuthenticatedGeneratorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/request-access': typeof RequestAccessRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/voorstellen': typeof VoorstellenRoute
-  '/sign/$token': typeof SignTokenRoute
-  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
-  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
+  '/generator': typeof AuthenticatedGeneratorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/request-access': typeof RequestAccessRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/voorstellen': typeof VoorstellenRoute
-  '/sign/$token': typeof SignTokenRoute
-  '/api/public/proposals': typeof ApiPublicProposalsRouteWithChildren
-  '/api/public/proposals/sign': typeof ApiPublicProposalsSignRoute
+  '/_authenticated/generator': typeof AuthenticatedGeneratorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/request-access'
+    | '/reset-password'
     | '/voorstellen'
-    | '/sign/$token'
-    | '/api/public/proposals'
-    | '/api/public/proposals/sign'
+    | '/generator'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
+    | '/request-access'
+    | '/reset-password'
     | '/voorstellen'
-    | '/sign/$token'
-    | '/api/public/proposals'
-    | '/api/public/proposals/sign'
+    | '/generator'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/request-access'
+    | '/reset-password'
     | '/voorstellen'
-    | '/sign/$token'
-    | '/api/public/proposals'
-    | '/api/public/proposals/sign'
+    | '/_authenticated/generator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  RequestAccessRoute: typeof RequestAccessRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   VoorstellenRoute: typeof VoorstellenRoute
-  SignTokenRoute: typeof SignTokenRoute
-  ApiPublicProposalsRoute: typeof ApiPublicProposalsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -103,6 +124,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/request-access': {
+      id: '/request-access'
+      path: '/request-access'
+      fullPath: '/request-access'
+      preLoaderRoute: typeof RequestAccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/voorstellen': {
       id: '/voorstellen'
       path: '/voorstellen'
@@ -110,46 +159,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VoorstellenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sign/$token': {
-      id: '/sign/$token'
-      path: '/sign/$token'
-      fullPath: '/sign/$token'
-      preLoaderRoute: typeof SignTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/proposals': {
-      id: '/api/public/proposals'
-      path: '/api/public/proposals'
-      fullPath: '/api/public/proposals'
-      preLoaderRoute: typeof ApiPublicProposalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/proposals/sign': {
-      id: '/api/public/proposals/sign'
-      path: '/sign'
-      fullPath: '/api/public/proposals/sign'
-      preLoaderRoute: typeof ApiPublicProposalsSignRouteImport
-      parentRoute: typeof ApiPublicProposalsRoute
+    '/_authenticated/generator': {
+      id: '/_authenticated/generator'
+      path: '/generator'
+      fullPath: '/generator'
+      preLoaderRoute: typeof AuthenticatedGeneratorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
-interface ApiPublicProposalsRouteChildren {
-  ApiPublicProposalsSignRoute: typeof ApiPublicProposalsSignRoute
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedGeneratorRoute: typeof AuthenticatedGeneratorRoute
 }
 
-const ApiPublicProposalsRouteChildren: ApiPublicProposalsRouteChildren = {
-  ApiPublicProposalsSignRoute: ApiPublicProposalsSignRoute,
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedGeneratorRoute: AuthenticatedGeneratorRoute,
 }
 
-const ApiPublicProposalsRouteWithChildren =
-  ApiPublicProposalsRoute._addFileChildren(ApiPublicProposalsRouteChildren)
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  RequestAccessRoute: RequestAccessRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   VoorstellenRoute: VoorstellenRoute,
-  SignTokenRoute: SignTokenRoute,
-  ApiPublicProposalsRoute: ApiPublicProposalsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
