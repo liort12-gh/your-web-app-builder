@@ -60,21 +60,21 @@ function GeneratorPage() {
         case "list":
           return await list({ data: undefined });
         case "get":
-          return await get({ data: { id: String(payload.id) } });
+          return await get({ data: { id: String(payload["id"]) } });
         case "save": {
           const result = await save({
             data: {
-              id: String(payload.id),
-              name: String(payload.name),
-              docType: payload.docType === "partner" ? "partner" : "merchant",
-              payload: String(payload.payload),
+              id: String(payload["id"]),
+              name: String(payload["name"]),
+              docType: payload["docType"] === "partner" ? "partner" : "merchant",
+              payload: String(payload["payload"]),
             },
           });
           void queryClient.invalidateQueries({ queryKey: ["my-proposals"] });
           return result;
         }
         case "delete": {
-          const result = await remove({ data: { id: String(payload.id) } });
+          const result = await remove({ data: { id: String(payload["id"]) } });
           void queryClient.invalidateQueries({ queryKey: ["my-proposals"] });
           return result;
         }
