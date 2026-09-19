@@ -49,6 +49,9 @@ select,#topbar input{border:1px solid var(--line);border-radius:8px;padding:7px 
 .rowchk img{width:20px;height:13px;object-fit:contain}
 .addrow{font:600 11.5px 'Inter';color:var(--msp-cyan);background:none;border:0;cursor:pointer;padding:4px 2px}
 .qrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 2px;font:500 12px 'Inter'}
+.qrow .qname{display:flex;align-items:center;gap:7px;cursor:pointer;flex:1;min-width:0}
+.qrow .qname input{width:auto;accent-color:var(--msp-cyan)}
+.qrow input[type="number"]:disabled{background:#F4F6F7;color:#B6C0C7}
 .qrow input{width:62px;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:600 12px 'Inter';text-align:right;background:#fff}
 .qrow input:focus{outline:none;border-color:var(--msp-cyan)}
 .hint{font:500 11px 'Inter';color:#8A97A0;background:#F5FAFD;border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.5}
@@ -113,6 +116,9 @@ h2.sec.center{text-align:center}
 .ptable .m .nm{font-weight:500}
 .ptable .m .pr{text-align:right;font-weight:600;white-space:nowrap}
 .ptable .m .pr.poa{color:var(--muted);font-weight:500}
+.ptable .thead td.oldh{color:#8A97A0}
+.ptable .m .pr.old{color:#8A97A0;font-weight:500}
+.ptable .m .pr.old.poa{color:var(--muted)}
 .ptable tbody.grp{border-top:2mm solid transparent}
 .smallnote{font-size:6.8pt;font-style:italic;line-height:1.45;color:#4A555E;margin-top:4mm}
 
@@ -317,13 +323,16 @@ function defaultState(dt){
     pages:{cover:true, product:false, benefits:false, agreement:false, financieel:true, tabel:true, pos:['partner','pos'].includes(dt||'merchant'), sig:true, notes:false},
     rows: (()=>{ const rs=baseRows(); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
     pos: {
-      hw:[{name:'P2 Smartpad',def:'\u20ac 349,-',nieuw:false},{name:'P2 Lite SE',def:'\u20ac 299,-',nieuw:false},{name:'P3 H',def:'\u20ac 349,-',nieuw:true},{name:'P3 KH',def:'\u20ac 329,-',nieuw:true},{name:'P3 Air',def:'\u20ac 399,-',nieuw:true},{name:'P3 Mix + Docker',def:'\u20ac 749,-',nieuw:false}],
-      mo:[{name:'Service fee*',val:'n.v.t'},{name:'Connection fee per actieve device per maand**',val:'n.v.t'}],
+      hw:[{name:'P2 Smartpad',def:'\u20ac 349,-',nieuw:false,on:true},{name:'P2 Lite SE',def:'\u20ac 299,-',nieuw:false,on:false},{name:'P3 H',def:'\u20ac 349,-',nieuw:true,on:false},{name:'P3 KH',def:'\u20ac 329,-',nieuw:true,on:false},{name:'P3 Air',def:'\u20ac 399,-',nieuw:true,on:true},{name:'P3 Mix + Docker',def:'\u20ac 749,-',nieuw:false,on:true}],
+      mo:[{name:'Service fee*',val:'\u20ac 6,95'},{name:'Connection fee per actieve device per maand**',val:'\u20ac 2,95'}],
       ttp:[{name:'Licentie fee per actieve Tap to Pay device per maand',val:'\u20ac 9,95'},{name:'Opslag per Tap to Pay transactie',val:'\u20ac 0,06'}],
       dom:[{fl:'NL',name:'Nederland (merchant in NL)',val:'n.v.t'},{fl:'BE',name:'Belgi\u00eb (merchant in BE)',val:'n.v.t'},{fl:'DE',name:'Duitsland (merchant in DE)',val:'n.v.t'}],
       nondom:[{k:'visa',name:'Visa Debit',val:'n.v.t'},{k:'mastercard',name:'Mastercard Debit',val:'n.v.t'}],
       credit:[{k:'visa',name:'Visa Credit',val:'n.v.t'},{k:'mastercard',name:'Mastercard Credit',val:'n.v.t'},{k:'amex',name:'American Express',val:'n.v.t'}]
     },
+    vergelijk: false,   // merchant: toon kolom met huidige tarieven
+    vergelijkLabel: 'Huidig tarief',
+    oud: {},            // row index -> huidig tarief
     poskorting: 0,
     qty: {},         // device index -> aantal (POS only)
     sig: {}          // ondertekening: ingevulde gegevens
@@ -356,6 +365,10 @@ function renderSidebar(){
     <div class="fld"><label>Contractperiode</label><input data-f="periode" value="${esc(F.periode)}"></div>
     ${isP?`<div class="fld"><label>Gemaakt door</label><input data-f="auteur" value="${esc(F.auteur)}"></div>`:''}
   ${(isP||S.pages.pos)?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
+  ${S.docType==='merchant'?`<h3>Vergelijking</h3>
+    <label class="chk"><input type="checkbox" id="vglOn" ${S.vergelijk?'checked':''}> Kolom met huidige tarieven</label>
+    ${S.vergelijk?`<div class="fld" style="margin-top:6px"><label>Koptekst kolom</label><input id="vglLabel" value="${esc(S.vergelijkLabel||'Huidig tarief')}"></div>
+    <div class="hint">Vul per betaalmethode het huidige tarief in door in de tabel op de streep te klikken.</div>`:''}`:''}
   <h3>Pagina's</h3>`;
   const pageDefs = S.docType==='pos'
     ? [['cover','Voorblad'],['pos','Offerte POS hardware'],['sig','Ondertekening']]
@@ -364,10 +377,11 @@ function renderSidebar(){
     ['notes','Aanvullende afspraken'],['tabel',isP?'Tarief ECOM transacties':'Tarieven per betaalmethode'],['pos','Tarief POS transacties'],['sig','Ondertekening']];
   for(const [k,l] of pageDefs) h+=`<label class="chk"><input type="checkbox" data-p="${k}" ${S.pages[k]?'checked':''}> ${l}</label>`;
   if(S.docType==='pos'){
-    h+=`<h3>Aantal devices</h3>`;
+    h+=`<h3>POS hardware</h3>`;
     S.pos.hw.forEach((r,i)=>{
       const q=+(S.qty[i]||0);
-      h+=`<div class="qrow"><span>${esc(r.name)}</span><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-qty="${i}" value="${q||''}"></div>`;
+      h+=`<div class="qrow"><label class="qname"><input type="checkbox" data-hw="${i}" ${r.on===false?'':'checked'}> ${esc(r.name)}</label>`+
+         `<input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-qty="${i}" value="${q||''}" ${r.on===false?'disabled':''}></div>`;
     });
     h+=`<div class="hint">Kies per device het aantal. Alleen devices met een aantal verschijnen in de offerte; prijzen en het totaal rekenen automatisch door.</div>`;
     sb.innerHTML=h;
@@ -376,7 +390,14 @@ function renderSidebar(){
     const pk0=sb.querySelector('#poskorting');
     if(pk0) pk0.addEventListener('input',()=>{ S.poskorting=parseFloat(pk0.value)||0; S.pos.hw.forEach(r=>{r.man=null;}); renderPreview(); });
     sb.querySelectorAll('[data-qty]').forEach(el=>el.addEventListener('input',()=>{ S.qty[el.dataset.qty]=Math.max(0,parseInt(el.value)||0); renderPreview(); }));
+    sb.querySelectorAll('[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; renderSidebar(); renderPreview(); }));
     return;
+  }
+  if(S.pages.pos){
+    h+=`<h3>POS hardware</h3>`;
+    S.pos.hw.forEach((r,i)=>{
+      h+=`<label class="rowchk"><input type="checkbox" data-hw="${i}" ${r.on===false?'':'checked'}> ${esc(r.name)}</label>`;
+    });
   }
   h+=`<h3>Betaalmethoden</h3>`;
   let cat='';
@@ -389,6 +410,11 @@ function renderSidebar(){
   sb.innerHTML=h;
   sb.querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('input',e=>{S.fields[el.dataset.f]=el.value; renderPreview();}));
   sb.querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('change',()=>{S.pages[el.dataset.p]=el.checked; if(el.dataset.p==='pos'){renderSidebar();} renderPreview();}));
+  const vgl=sb.querySelector('#vglOn');
+  if(vgl) vgl.addEventListener('change',()=>{ S.vergelijk=vgl.checked; renderSidebar(); renderPreview(); });
+  const vglL=sb.querySelector('#vglLabel');
+  if(vglL) vglL.addEventListener('input',()=>{ S.vergelijkLabel=vglL.value; renderPreview(); });
+  sb.querySelectorAll('input[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; renderPreview(); }));
   sb.querySelectorAll('input[data-r]').forEach(el=>el.addEventListener('change',()=>{S.rows[el.dataset.r].on=el.checked; syncCatBoxes(); renderPreview();}));
   sb.querySelectorAll('input[data-cat]').forEach(el=>{
     el.addEventListener('change',()=>{
@@ -608,13 +634,20 @@ function pgTabel(){
     if(!g){g={cat:r.cat, rows:[]}; cats.push(g);}
     g.rows.push(r);
   }
-  const theadHtml=`<thead class="thead"><tr><td></td><td></td><td>${isP?'INKOOPTARIEF PER<br>BETAALMETHODE':'TARIEF PER<br>BETAALMETHODE'}</td></tr></thead>`;
+  const cmp = S.docType==='merchant' && S.vergelijk;
+  const cols = cmp?4:3;
+  const theadHtml=`<thead class="thead"><tr><td></td><td></td>`+
+    (cmp?`<td class="oldh" contenteditable data-cmplabel>${esc(S.vergelijkLabel||'Huidig tarief')}</td>`:'')+
+    `<td>${isP?'INKOOPTARIEF PER<br>BETAALMETHODE':'TARIEF PER<br>BETAALMETHODE'}</td></tr></thead>`;
   let bodies='';
   for(const g of cats){
-    let b=`<tr class="cat"><td colspan="3">${g.cat}</td></tr>`;
+    let b=`<tr class="cat"><td colspan="${cols}">${g.cat}</td></tr>`;
     for(const r of g.rows){
       const i=S.rows.indexOf(r), poa=/aanvraag/i.test(r.price);
-      b+=`<tr class="m"><td class="ic"><img src="${A[r.key]||''}" onerror="this.style.display='none'"></td><td class="nm" contenteditable>${esc(r.name)}</td><td class="pr ${poa?'poa':''}" contenteditable data-price="${i}">${esc((r.key==='applepay'||r.key==='googlepay')?r.price:composePrice(r.price))}</td></tr>`;
+      const oud=(S.oud||{})[i]||'';
+      b+=`<tr class="m"><td class="ic"><img src="${A[r.key]||''}" onerror="this.style.display='none'"></td><td class="nm" contenteditable>${esc(r.name)}</td>`+
+         (cmp?`<td class="pr old${oud?'':' poa'}" contenteditable data-oud="${i}">${esc(oud||'\u2014')}</td>`:'')+
+         `<td class="pr ${poa?'poa':''}" contenteditable data-price="${i}">${esc((r.key==='applepay'||r.key==='googlepay')?r.price:composePrice(r.price))}</td></tr>`;
     }
     bodies+=`<tbody class="grp">${b}</tbody>`;
   }
@@ -723,7 +756,7 @@ function euroFmt(v){
 function posNum(x){ const v=parsePrice(x); return v==null?0:v; }
 function posTotals(){
   let units=0, one=0;
-  S.pos.hw.forEach((r,i)=>{ const q=+(S.qty[i]||0); if(q>0){ units+=q; one+=q*posNum(hwTarief(r)); } });
+  S.pos.hw.forEach((r,i)=>{ if(r.on===false) return; const q=+(S.qty[i]||0); if(q>0){ units+=q; one+=q*posNum(hwTarief(r)); } });
   return {units, one};
 }
 function money(v){ return '\u20ac '+v.toFixed(2).replace('.',','); }
@@ -734,9 +767,10 @@ function posHead(label, h1, h2){
 function pgPosOnly(){
   const P=S.pos, TOT=posTotals(), bedrijf=esc(S.fields.bedrijf||'');
   const k=parseFloat(S.poskorting)||0;
-  const any=P.hw.some((r,i)=>+(S.qty[i]||0)>0);
+  const any=P.hw.some((r,i)=>r.on!==false && +(S.qty[i]||0)>0);
   let hw='';
   P.hw.forEach((r,i)=>{
+    if(r.on===false) return;
     const q=+(S.qty[i]||0);
     if(any && q<=0) return;
     const t=hwTarief(r);
@@ -774,6 +808,7 @@ function pgPos(){
   const P=S.pos;
   let hw='';
   P.hw.forEach((r,i)=>{
+    if(r.on===false) return;
     const t=hwTarief(r);
     hw+=`<tr class="m"><td class="ic">${TERM_SVG}</td><td class="nm" contenteditable data-pos="hw.${i}.name">${esc(r.name)}${r.nieuw?'<span class="nieuw">Nieuw</span>':''}</td>`+
         `<td class="pr2 posval${posGray(r.def)}" contenteditable data-pos="hw.${i}.def">${esc(r.def)}</td>`+
@@ -901,6 +936,19 @@ function renderPreview(){
       }
     });
   }
+  pv.querySelectorAll('[data-oud]').forEach(el=>{
+    el.addEventListener('focus',()=>{ if(el.textContent.trim()==='\u2014') el.textContent=''; });
+    el.addEventListener('blur',()=>{
+      const i=el.dataset.oud; let v=el.textContent.trim();
+      if(!S.oud) S.oud={};
+      if(v===''){ delete S.oud[i]; el.textContent='\u2014'; el.classList.add('poa'); return; }
+      const f=euroFmt(v); if(f!==v){ v=f; el.textContent=v; }
+      S.oud[i]=v; el.classList.remove('poa');
+    });
+  });
+  pv.querySelectorAll('[data-cmplabel]').forEach(el=>el.addEventListener('blur',()=>{
+    S.vergelijkLabel=el.textContent.trim()||'Huidig tarief'; renderSidebar();
+  }));
   pv.querySelectorAll('[data-price]').forEach(el=>{
     el.addEventListener('focus',()=>{ const i=+el.dataset.price; const raw=S.rows[i].price;
       el.textContent=/aanvraag/i.test(raw)?'':raw; });
@@ -926,7 +974,8 @@ function renderPreview(){
     el.addEventListener('blur',()=>{
       let v=el.dataset.pos.endsWith('.name')?el.textContent.replace(/Nieuw$/,'').trim():el.textContent.trim();
       if(isVal && v===''){ v='n.v.t'; el.textContent=v; el.classList.add('poa'); }
-      else if(isVal){ const f=euroFmt(v); if(f!==v){ v=f; el.textContent=v; } }
+      else if(isVal){ const f=euroFmt(v); if(f!==v){ v=f; el.textContent=v; }
+        el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(v)); }
       setPosPath(el.dataset.pos, v);
       if(el.dataset.pos.endsWith('.val')) posSync(el.dataset.pos, v);
     });
@@ -939,6 +988,7 @@ function renderPreview(){
     el.addEventListener('focus',()=>{ if(PH.test(el.textContent.trim())) el.textContent=''; });
     el.addEventListener('blur',()=>{
       const i=+el.dataset.posman; let v=euroFmt(el.textContent.trim()); if(v!==el.textContent.trim()) el.textContent=v;
+      el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(v));
       if(v===''){ S.pos.hw[i].man=null; const c=hwTarief(S.pos.hw[i]);   // empty -> back to computed price
         el.textContent=c; el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(c)); return; }
       const computed=hwTarief({...S.pos.hw[i], man:null});
@@ -966,7 +1016,7 @@ function renderAll(){
 
 document.querySelectorAll('#docTypeSeg button').forEach(b=>b.addEventListener('click',()=>{
   S.docType=b.dataset.dt;
-  if(S.docType==='pos'){ S.pages.pos=true; S.pos.mo.forEach(r=>{ if(/n\.v\.t|aanvraag/i.test(r.val)) r.val='\u20ac 0,00'; }); }
+  if(S.docType==='pos'){ S.pages.pos=true; }
   if(S.docType==='partner') S.pages.pos=true;   // merchant: keep the user's own POS keuze
   if(S.docType==='partner') S.rows.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; });
   if(S.docType==='partner' && S.fields.txkosten==='€ 0,05') S.fields.txkosten='€ 0,10';
@@ -1388,6 +1438,13 @@ document.getElementById('htmlBtn').addEventListener('click', async ()=>{
     btn.textContent = r==='saved'?'Opgeslagen \u2713' : r==='opened'?'Geopend in tabblad' : r==='declined'?orig : 'Opslaan geblokkeerd';
   }catch(e){ btn.textContent=(e&&e.code==='declined')?orig:'Opslaan mislukt'; }
   setTimeout(()=>btn.textContent=orig, 2600);
+});
+
+document.getElementById('preview').addEventListener('input', e=>{
+  const t=e.target.closest ? e.target.closest('.posval') : null;
+  if(!t) return;
+  t.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(t.textContent));
+  if(t.dataset.pos && t.dataset.pos.endsWith('.val') && typeof posSync==='function') posSync(t.dataset.pos, t.textContent.trim());
 });
 
 /* paste as plain text everywhere in the preview — strip colours/formatting from copied rates */
