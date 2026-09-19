@@ -48,6 +48,9 @@ select,#topbar input{border:1px solid var(--line);border-radius:8px;padding:7px 
 .rowchk:hover{background:#F5FAFD}
 .rowchk img{width:20px;height:13px;object-fit:contain}
 .addrow{font:600 11.5px 'Inter';color:var(--msp-cyan);background:none;border:0;cursor:pointer;padding:4px 2px}
+.qrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 2px;font:500 12px 'Inter'}
+.qrow input{width:62px;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:600 12px 'Inter';text-align:right;background:#fff}
+.qrow input:focus{outline:none;border-color:var(--msp-cyan)}
 .hint{font:500 11px 'Inter';color:#8A97A0;background:#F5FAFD;border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.5}
 
 #preview{flex:1;overflow-y:auto;padding:26px;display:flex;flex-direction:column;align-items:center;gap:26px}
@@ -122,6 +125,10 @@ h3.posh{font-size:10pt;font-weight:700;margin:3mm 0 1.5mm}
 .ptable.pos .m .pr2{text-align:right;font-weight:600;white-space:nowrap}
 .ptable.pos .m .pr2.poa{color:var(--muted);font-weight:500}
 .ptable.pos .ic svg,.ptable.pos .ic img{width:7.5mm;height:5mm;object-fit:contain;display:block}
+.ptable.pos .m .qtycell{text-align:right;font-weight:600;color:var(--ink)}
+.ptable.pos .tot td{background:#E2E6E9;padding:1.6mm 2mm;font-size:8.6pt}
+.ptable.pos .tot .lbl{text-align:right;font-weight:700}
+.ptable.pos .tot .val{text-align:right;font-weight:700;font-size:9.6pt;white-space:nowrap}
 .nieuw{color:var(--msp-pink);font-style:italic;font-weight:500;margin-left:1mm}
 .posnote{font-size:6.6pt;line-height:1.45;color:var(--msp-pink);margin:0 0 2.5mm}
 /* safety valve when content still runs long */
@@ -154,7 +161,9 @@ h3.posh{font-size:10pt;font-weight:700;margin:3mm 0 1.5mm}
 .sigfields{display:grid;grid-template-columns:34mm 1fr;gap:5.5mm 6mm;font-size:8.5pt;max-width:150mm}
 .sigfields .lb{font-weight:700}
 .sigfields .lb small{display:block;font-weight:400;font-size:6.6pt;color:#6B7780}
-.sigfields .dots{border-bottom:1px dotted #9AA5AD;height:5mm;display:flex;align-items:flex-end;padding-bottom:0.6mm;font-size:8.5pt;color:#1A1517}
+.sigfields .dots{border-bottom:1px dotted #9AA5AD;min-height:5mm;display:flex;align-items:flex-end;padding:0 1mm 0.6mm;font-size:8.5pt;color:#1A1517}
+.sigfields .dots[contenteditable]:hover{background:#F5FAFD}
+.sigfields .dots[contenteditable]:focus{outline:none;border-bottom-color:var(--msp-cyan);background:#F5FAFD}
 .sigfields .dots.sigimg{height:18mm;border-bottom:1px dotted #9AA5AD}
 .sigfields .dots.sigimg img{max-height:16mm;max-width:70mm;display:block}
 
@@ -220,6 +229,7 @@ html,body,*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     <div class="seg" id="docTypeSeg">
       <button data-dt="merchant">Merchant</button>
       <button data-dt="partner">Partner</button>
+      <button data-dt="pos">POS only</button>
     </div>
     <span class="divider"></span>
     <select id="savedSel" title="Opgeslagen voorstellen"><option value="">— Opgeslagen voorstellen —</option></select>
@@ -304,7 +314,7 @@ function defaultState(dt){
       retrieval:'€ 5,00', chargeback:'€ 25,00', reversal:'€ 1,00', moi:'€ 60,00',
       notes:''
     },
-    pages:{cover:true, product:false, benefits:false, agreement:false, financieel:true, tabel:true, pos:(dt||'merchant')==='partner', sig:true, notes:false},
+    pages:{cover:true, product:false, benefits:false, agreement:false, financieel:true, tabel:true, pos:['partner','pos'].includes(dt||'merchant'), sig:true, notes:false},
     rows: (()=>{ const rs=baseRows(); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
     pos: {
       hw:[{name:'P2 Smartpad',def:'\u20ac 349,-',nieuw:false},{name:'P2 Lite SE',def:'\u20ac 299,-',nieuw:false},{name:'P3 H',def:'\u20ac 349,-',nieuw:true},{name:'P3 KH',def:'\u20ac 329,-',nieuw:true},{name:'P3 Air',def:'\u20ac 399,-',nieuw:true},{name:'P3 Mix + Docker',def:'\u20ac 749,-',nieuw:false}],
@@ -314,7 +324,9 @@ function defaultState(dt){
       nondom:[{k:'visa',name:'Visa Debit',val:'n.v.t'},{k:'mastercard',name:'Mastercard Debit',val:'n.v.t'}],
       credit:[{k:'visa',name:'Visa Credit',val:'n.v.t'},{k:'mastercard',name:'Mastercard Credit',val:'n.v.t'},{k:'amex',name:'American Express',val:'n.v.t'}]
     },
-    poskorting: 0
+    poskorting: 0,
+    qty: {},         // device index -> aantal (POS only)
+    sig: {}          // ondertekening: ingevulde gegevens
   };
 }
 
@@ -345,10 +357,27 @@ function renderSidebar(){
     ${isP?`<div class="fld"><label>Gemaakt door</label><input data-f="auteur" value="${esc(F.auteur)}"></div>`:''}
   ${(isP||S.pages.pos)?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
   <h3>Pagina's</h3>`;
-  const pageDefs=[['cover','Voorblad'],['product','Acquirer & integraties'],['benefits','Verbeter uw business'],
+  const pageDefs = S.docType==='pos'
+    ? [['cover','Voorblad'],['pos','Offerte POS hardware'],['sig','Ondertekening']]
+    : [['cover','Voorblad'],['product','Acquirer & integraties'],['benefits','Verbeter uw business'],
     ['agreement', isP?'Samenwerkingsvoorstel (artikelen)':'Samenwerkingsovereenkomst'],['financieel','Financieel voorstel'],
     ['notes','Aanvullende afspraken'],['tabel',isP?'Tarief ECOM transacties':'Tarieven per betaalmethode'],['pos','Tarief POS transacties'],['sig','Ondertekening']];
   for(const [k,l] of pageDefs) h+=`<label class="chk"><input type="checkbox" data-p="${k}" ${S.pages[k]?'checked':''}> ${l}</label>`;
+  if(S.docType==='pos'){
+    h+=`<h3>Aantal devices</h3>`;
+    S.pos.hw.forEach((r,i)=>{
+      const q=+(S.qty[i]||0);
+      h+=`<div class="qrow"><span>${esc(r.name)}</span><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-qty="${i}" value="${q||''}"></div>`;
+    });
+    h+=`<div class="hint">Kies per device het aantal. Alleen devices met een aantal verschijnen in de offerte; prijzen en het totaal rekenen automatisch door.</div>`;
+    sb.innerHTML=h;
+    sb.querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('input',()=>{S.fields[el.dataset.f]=el.value; renderPreview();}));
+    sb.querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('change',()=>{S.pages[el.dataset.p]=el.checked; renderPreview();}));
+    const pk0=sb.querySelector('#poskorting');
+    if(pk0) pk0.addEventListener('input',()=>{ S.poskorting=parseFloat(pk0.value)||0; S.pos.hw.forEach(r=>{r.man=null;}); renderPreview(); });
+    sb.querySelectorAll('[data-qty]').forEach(el=>el.addEventListener('input',()=>{ S.qty[el.dataset.qty]=Math.max(0,parseInt(el.value)||0); renderPreview(); }));
+    return;
+  }
   h+=`<h3>Betaalmethoden</h3>`;
   let cat='';
   S.rows.forEach((r,i)=>{
@@ -683,11 +712,65 @@ function posSync(path, val){
     });
   });
 }
+function euroFmt(v){
+  const t=String(v).trim();
+  if(!t) return t;
+  if(/[a-z%]/i.test(t)) return t;
+  const n=parseFloat(t.replace(/[\u20ac\s.]/g,'').replace(',','.'));
+  if(isNaN(n)) return t;
+  return '\u20ac '+n.toFixed(2).replace('.',',');
+}
+function posNum(x){ const v=parsePrice(x); return v==null?0:v; }
+function posTotals(){
+  let units=0, one=0;
+  S.pos.hw.forEach((r,i)=>{ const q=+(S.qty[i]||0); if(q>0){ units+=q; one+=q*posNum(hwTarief(r)); } });
+  return {units, one};
+}
+function money(v){ return '\u20ac '+v.toFixed(2).replace('.',','); }
 function posGray(v){ return /n\.v\.t|aanvraag/i.test(v||'')?' poa':''; }
 function posHead(label, h1, h2){
   return `<tr class="phead"><td colspan="2" contenteditable>${label}</td><td class="vh" contenteditable>${h1||''}</td><td class="vh" contenteditable>${h2||''}</td></tr>`;
 }
+function pgPosOnly(){
+  const P=S.pos, TOT=posTotals(), bedrijf=esc(S.fields.bedrijf||'');
+  const k=parseFloat(S.poskorting)||0;
+  const any=P.hw.some((r,i)=>+(S.qty[i]||0)>0);
+  let hw='';
+  P.hw.forEach((r,i)=>{
+    const q=+(S.qty[i]||0);
+    if(any && q<=0) return;
+    const t=hwTarief(r);
+    hw+=`<tr class="m"><td class="ic">${TERM_SVG}</td><td class="nm" contenteditable data-pos="hw.${i}.name">${esc(r.name)}${r.nieuw?'<span class="nieuw">Nieuw</span>':''}</td>`+
+        `<td class="pr2 qtycell">${any?q:''}</td>`+
+        `<td class="pr2 posval" contenteditable data-posman="${i}">${esc(t)}</td></tr>`;
+  });
+  let mo='';
+  P.mo.forEach((r,i)=>{
+    mo+=`<tr class="m"><td class="ic">${TERM_SVG}</td><td class="nm" contenteditable data-pos="mo.${i}.name">${esc(r.name)}</td><td class="pr2"></td>`+
+        `<td class="pr2 posval" contenteditable data-pos="mo.${i}.val">${esc(r.val)}</td></tr>`;
+  });
+  return `<div class="page pospage"><div class="pad">
+    ${logoBlock()}
+    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>Offerte POS hardware</h2>
+    <p class="lead" style="margin-bottom:3mm" contenteditable>Tarieven in deze offerte worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan ${bedrijf}.</p>
+    <h3 class="posh" style="margin-top:0" contenteditable>POS Hardware</h3>
+    <table class="ptable pos">${POSCOLS}<tbody>
+      ${posHead('HARDWARE','Aantal','Tarief '+bedrijf)}
+      ${hw}
+      <tr class="tot"><td colspan="2"></td><td class="pr2 lbl">Totaal eenmalig</td><td class="pr2 val">${money(TOT.one)}</td></tr>
+    </tbody></table>
+    ${k>0?`<div class="posnote" style="color:#4A555E" contenteditable>Alle hardwaretarieven zijn inclusief ${String(k).replace('.',',')}% korting op het defaulttarief.</div>`:''}
+    <h3 class="posh" contenteditable>Maandelijkse kosten</h3>
+    <table class="ptable pos">${POSCOLS}<tbody>
+      ${posHead('MAANDELIJKS','','Tarief per terminal')}
+      ${mo}
+    </tbody></table>
+    <div class="posnote" contenteditable>* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.</div>
+    ${foot()}
+  </div></div>`;
+}
 function pgPos(){
+  if(S.docType==='pos') return pgPosOnly();
   const P=S.pos;
   let hw='';
   P.hw.forEach((r,i)=>{
@@ -748,6 +831,7 @@ function pgPos(){
 
 function pgSig(){
   const isP=S.docType==='partner';
+  if(S.sig && !S.sig.partij && S.fields.bedrijf && S.fields.bedrijf!=='[Bedrijfsnaam]') S.sig.partij=S.fields.bedrijf;
   return `<div class="page sig"><div class="pad">
     ${logoBlock()}
     <p style="font-size:9pt;margin-bottom:2mm" contenteditable>Aldus overeengekomen, opgemaakt en ondertekend te Amsterdam:</p>
@@ -764,8 +848,9 @@ function pgSig(){
         const val=f.image
           ? (S.signature?`<img src="${S.signature}" alt="Handtekening">`:'')
           : esc((S.sig||{})[f.key]||'');
+        const ed = (!f.image && !(typeof SIGN_TOKEN!=='undefined' && SIGN_TOKEN)) ? ' contenteditable' : '';
         return `<div class="lb"${gap}>${f.label}${f.small?`<small>${f.small}</small>`:''}</div>`+
-               `<div class="dots${f.image?' sigimg':''}"${gap} data-sig="${f.key}">${val}</div>`;
+               `<div class="dots${f.image?' sigimg':''}"${gap} data-sig="${f.key}"${ed}>${val}</div>`;
       }).join('')}
     </div>
     ${foot()}
@@ -776,6 +861,11 @@ function pgSig(){
 function renderPreview(){
   const pv=document.getElementById('preview');
   let h='';
+  if(S.docType==='pos'){
+    if(S.pages.cover) h+=pgCover();
+    if(S.pages.pos) h+=pgPos();
+    if(S.pages.sig) h+=pgSig();
+  } else {
   if(S.pages.cover) h+=pgCover();
   if(S.pages.product) h+=pgProduct();
   if(S.pages.benefits) h+=pgBenefits();
@@ -785,6 +875,7 @@ function renderPreview(){
   if(S.pages.pos) h+=pgPos();
   if(S.docType==='merchant' && S.pages.agreement) h+=pgAgreement();
   if(S.pages.sig) h+=pgSig();
+  }
   pv.innerHTML=h;
   paginateTables();
   // POS page must never run into the footer: tighten automatically if it would
@@ -835,14 +926,19 @@ function renderPreview(){
     el.addEventListener('blur',()=>{
       let v=el.dataset.pos.endsWith('.name')?el.textContent.replace(/Nieuw$/,'').trim():el.textContent.trim();
       if(isVal && v===''){ v='n.v.t'; el.textContent=v; el.classList.add('poa'); }
+      else if(isVal){ const f=euroFmt(v); if(f!==v){ v=f; el.textContent=v; } }
       setPosPath(el.dataset.pos, v);
       if(el.dataset.pos.endsWith('.val')) posSync(el.dataset.pos, v);
     });
   });
+  pv.querySelectorAll('.dots[data-sig][contenteditable]').forEach(el=>el.addEventListener('blur',()=>{
+    if(!S.sig) S.sig={};
+    S.sig[el.dataset.sig]=el.textContent.trim();
+  }));
   pv.querySelectorAll('[data-posman]').forEach(el=>{
     el.addEventListener('focus',()=>{ if(PH.test(el.textContent.trim())) el.textContent=''; });
     el.addEventListener('blur',()=>{
-      const i=+el.dataset.posman, v=el.textContent.trim();
+      const i=+el.dataset.posman; let v=euroFmt(el.textContent.trim()); if(v!==el.textContent.trim()) el.textContent=v;
       if(v===''){ S.pos.hw[i].man=null; const c=hwTarief(S.pos.hw[i]);   // empty -> back to computed price
         el.textContent=c; el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(c)); return; }
       const computed=hwTarief({...S.pos.hw[i], man:null});
@@ -870,6 +966,7 @@ function renderAll(){
 
 document.querySelectorAll('#docTypeSeg button').forEach(b=>b.addEventListener('click',()=>{
   S.docType=b.dataset.dt;
+  if(S.docType==='pos'){ S.pages.pos=true; S.pos.mo.forEach(r=>{ if(/n\.v\.t|aanvraag/i.test(r.val)) r.val='\u20ac 0,00'; }); }
   if(S.docType==='partner') S.pages.pos=true;   // merchant: keep the user's own POS keuze
   if(S.docType==='partner') S.rows.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; });
   if(S.docType==='partner' && S.fields.txkosten==='€ 0,05') S.fields.txkosten='€ 0,10';
