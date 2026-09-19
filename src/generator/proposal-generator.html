@@ -1200,31 +1200,25 @@ function restoreState(rec){
   applyEdits(rec.edits);
 }
 async function initStore(){
-  // Shared store: proposals live server-side and are visible to everyone
-  // who opens this artifact. Falls back to this browser if the store is
-  // unavailable (e.g. a read-only viewer, or store not granted).
-  DB=null;
+  // Account store: proposals are saved under the signed-in team member and are
+  // visible only to that member. Falls back to this browser when no host page
+  // is available (e.g. the standalone file).
+  DB=null; REMOTE=false;
   try{
-    DB = (window.claude && window.claude.use) ? await window.claude.use('db') : null;
-  }catch(e){ DB=null; }
-  if(DB){
-    try{
-      // Keep the saved-proposals list live: when a colleague adds, renames
-      // or deletes a proposal, everyone's dropdown updates automatically.
-      DB.collection('proposals').orderBy('updatedAt','desc').limit(200).onSnapshot(()=>{ refreshSaved(); });
-    }catch(e){}
-  }
+    await host('list');
+    REMOTE=true;
+  }catch(e){ REMOTE=false; }
   await refreshSaved();
 }
 async function refreshSaved(){
   SAVED=[];
-  if(DB){
+  if(REMOTE){
     try{
-      const snap=await DB.collection('proposals').orderBy('updatedAt','desc').limit(200).get();
-      snap.docs.forEach(d=>{ const v=d.data(); SAVED.push({id:d.id, name:v.name, docType:v.docType, updatedAt:v.updatedAt}); });
-    }catch(e){ DB=null; }
+      const rows=await host('list');
+      SAVED=(rows||[]).map(r=>({id:r.id,name:r.name,docType:r.docType,updatedAt:r.updatedAt}));
+    }catch(e){ REMOTE=false; }
   }
-  if(!DB){
+  if(!REMOTE){
     const a=lsAll();
     SAVED=Object.keys(a).map(id=>({id, name:a[id].name, docType:a[id].docType, updatedAt:a[id].updatedAt}))
       .sort((x,y)=>String(y.updatedAt).localeCompare(String(x.updatedAt)));
