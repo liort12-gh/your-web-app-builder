@@ -12,6 +12,9 @@ import {
 } from "@/lib/proposals.functions";
 
 export const Route = createFileRoute("/_authenticated/generator")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    open: typeof search.open === "string" ? search.open : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Voorstel maken — MSP Voorstellen" },
