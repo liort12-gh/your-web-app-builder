@@ -321,15 +321,15 @@ document.getElementById('brandmark').innerHTML = MARK;
 
 /* ---------- default row sets ---------- */
 function baseRows(){ return [
- {cat:'CREDITCARDS', key:'mastercard', name:'Mastercard', price:'0,40 % IC++', on:true},
- {cat:'CREDITCARDS', key:'visa', name:'Visa', price:'0,40 % IC++', on:true},
+ {cat:'CREDITCARDS', key:'mastercard', name:'Mastercard', price:'1,40 % IC++', on:true},
+ {cat:'CREDITCARDS', key:'visa', name:'Visa', price:'1,40 % IC++', on:true},
  {cat:'CREDITCARDS', key:'amex', name:'American Express', price:'Prijs op aanvraag', on:true},
  {cat:'CREDITCARDS', key:'cartesbancaires', name:'Cartes Bancaires (Frankrijk)', price:'Prijs op aanvraag', on:true},
- {cat:'DEBIT CARDS', key:'maestro', name:'Maestro', price:'0,40 % IC++', on:true},
+ {cat:'DEBIT CARDS', key:'maestro', name:'Maestro', price:'1,40 % IC++', on:true},
  {cat:'DEBIT CARDS', key:'bancontact', name:'Bancontact (+QR) (België)', price:'€ 0,12', on:true},
  {cat:'DEBIT CARDS', key:'postepay', name:'Postepay (Italië)', price:'Prijs op aanvraag', on:false},
  {cat:'DEBIT CARDS', key:'dankort', name:'Dankort (Denemarken)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'ideal', name:'iDEAL (+QR) (Nederland)', price:'€ 0,07', on:true},
+ {cat:'ONLINE BANKING', key:'ideal', name:'iDEAL (+QR) (Nederland)', price:'€ 0,10', on:true},
  {cat:'ONLINE BANKING', key:'belfius', name:'Belfius (België)', price:'0,70 %', on:true},
  {cat:'ONLINE BANKING', key:'kbc', name:'KBC/CBC (België)', price:'0,70 %', on:true},
  {cat:'ONLINE BANKING', key:'eps', name:'EPS (Oostenrijk)', price:'Prijs op aanvraag', on:false},
@@ -369,7 +369,7 @@ function defaultState(dt){
     docType: dt||'merchant',
     fields:{
       bedrijf:'[Bedrijfsnaam]', datum:today, geldig:'', periode:'24 maanden', auteur:'Lior Tacq',
-      txkosten:'€ 0,05', refund:'€ 0,19', payout:'€ 0,50', viban:'€ 0,02',
+      txkosten:'€ 0,10', refund:'€ 0,19', payout:'€ 0,50', viban:'€ 0,02',
       retrieval:'€ 5,00', chargeback:'€ 25,00', reversal:'€ 1,00', moi:'€ 60,00',
       notes:''
     },
