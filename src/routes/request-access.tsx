@@ -37,6 +37,10 @@ function RequestAccessPage() {
       setError("Kies een wachtwoord van minimaal 8 tekens.");
       return;
     }
+    if (password !== passwordConfirm) {
+      setError("De wachtwoorden komen niet overeen.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const { error: signUpError } = await supabase.auth.signUp({
