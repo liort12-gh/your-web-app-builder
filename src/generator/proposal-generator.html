@@ -448,9 +448,18 @@ function renderSidebar(){
   }
   if(S.pages.pos){
     h+=`<h3>POS hardware</h3>`;
-    S.pos.hw.forEach((r,i)=>{
-      h+=`<label class="rowchk"><input type="checkbox" data-hw="${i}" ${r.on===false?'':'checked'}> ${esc(r.name)}</label>`;
-    });
+    if(S.docType==='merchant'){
+      S.pos.hw.forEach((r,i)=>{
+        const q=+(S.qty[i]||0);
+        h+=`<div class="qrow"><label class="qname"><input type="checkbox" data-hw="${i}" ${r.on===false?'':'checked'}> ${esc(r.name)}</label>`+
+           `<input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-qty="${i}" value="${q||''}" ${r.on===false?'disabled':''}></div>`;
+      });
+      h+=`<div class="hint">Vul per device het aantal terminals in. Alleen devices met een aantal komen in het voorstel; het totaal eenmalig wordt automatisch berekend.</div>`;
+    } else {
+      S.pos.hw.forEach((r,i)=>{
+        h+=`<label class="rowchk"><input type="checkbox" data-hw="${i}" ${r.on===false?'':'checked'}> ${esc(r.name)}</label>`;
+      });
+    }
   }
   h+=`<h3>Betaalmethoden</h3>`;
   let cat='';
