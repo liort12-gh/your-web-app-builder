@@ -110,8 +110,20 @@ function RequestAccessPage() {
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
-
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              <div>
+                <label htmlFor="password-confirm" className="block text-xs font-semibold text-foreground">
+                  Wachtwoord bevestigen
+                </label>
+                <input
+                  id="password-confirm"
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
 
               <button
                 type="submit"
