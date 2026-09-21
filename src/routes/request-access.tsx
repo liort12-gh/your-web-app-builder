@@ -26,6 +26,7 @@ export const Route = createFileRoute("/request-access")({
 function RequestAccessPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -34,6 +35,10 @@ function RequestAccessPage() {
     event.preventDefault();
     if (password.length < 8) {
       setError("Kies een wachtwoord van minimaal 8 tekens.");
+      return;
+    }
+    if (password !== passwordConfirm) {
+      setError("De wachtwoorden komen niet overeen.");
       return;
     }
     setBusy(true);
@@ -102,6 +107,20 @@ function RequestAccessPage() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+              <div>
+                <label htmlFor="password-confirm" className="block text-xs font-semibold text-foreground">
+                  Wachtwoord bevestigen
+                </label>
+                <input
+                  id="password-confirm"
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
