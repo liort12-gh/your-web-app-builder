@@ -900,10 +900,14 @@ function pgPos(){
     <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>Tarief overzicht POS transacties</h2>
     <p class="lead" style="margin-bottom:3mm" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.</p>
     <h3 class="posh" style="margin-top:0" contenteditable>POS Hardware</h3>
-    <table class="ptable pos">${POSCOLS}<tbody>
+    ${isM?`<table class="ptable pos">${POSCOLS5}<tbody>
+      <tr class="phead"><td colspan="2" contenteditable>HARDWARE</td><td class="vh" contenteditable>Aantal</td><td class="vh" contenteditable>Tarief per stuk</td><td class="vh" contenteditable>Totaal</td></tr>
+      ${hw}
+      <tr class="tot"><td colspan="3"></td><td class="pr2 lbl">Totaal eenmalig</td><td class="pr2 val">${money(TOT.one)}</td></tr>
+    </tbody></table>`:`<table class="ptable pos">${POSCOLS}<tbody>
       ${posHead('HARDWARE','Tarief default','Tarief '+bedrijf)}
       ${hw}
-    </tbody></table>
+    </tbody></table>`}
     <table class="ptable pos">${POSCOLS}<tbody>
       ${posHead('MAANDELIJKS','','Tarief')}
       ${mo}
