@@ -29,6 +29,8 @@ export const Route = createFileRoute("/_authenticated/generator")({
         property: "og:description",
         content: "Interne generator voor merchant- en partnervoorstellen.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
     ],
   }),

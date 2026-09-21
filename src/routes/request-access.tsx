@@ -17,6 +17,8 @@ export const Route = createFileRoute("/request-access")({
         property: "og:description",
         content: "Aanvragen worden handmatig goedgekeurd door de beheerder.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
     ],
   }),
