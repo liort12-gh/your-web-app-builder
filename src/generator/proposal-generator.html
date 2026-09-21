@@ -919,7 +919,6 @@ function pgPos(){
 
 function pgSig(){
   const isP=S.docType==='partner';
-  if(S.sig && !S.sig.partij && S.fields.bedrijf && S.fields.bedrijf!=='[Bedrijfsnaam]') S.sig.partij=S.fields.bedrijf;
   return `<div class="page sig"><div class="pad">
     ${logoBlock()}
     <p style="font-size:9pt;margin-bottom:2mm" contenteditable>Aldus overeengekomen, opgemaakt en ondertekend te Amsterdam:</p>
@@ -1176,7 +1175,7 @@ function flash(msg, ok){ const el=document.getElementById('saveState'); el.textC
 function captureEdits(){
   const out={};
   document.querySelectorAll('#preview [contenteditable]').forEach((el,i)=>{
-    if(el.dataset.price||el.dataset.pos||el.dataset.posman||el.dataset.fee||el.dataset.bind||el.dataset.notes) return;
+    if(el.dataset.price||el.dataset.pos||el.dataset.posman||el.dataset.fee||el.dataset.bind||el.dataset.notes||el.dataset.sig) return;
     out[i]=el.innerHTML;
   });
   return out;
@@ -1184,7 +1183,7 @@ function captureEdits(){
 function applyEdits(map){
   if(!map) return;
   document.querySelectorAll('#preview [contenteditable]').forEach((el,i)=>{
-    if(el.dataset.price||el.dataset.pos||el.dataset.posman||el.dataset.fee||el.dataset.bind||el.dataset.notes) return;
+    if(el.dataset.price||el.dataset.pos||el.dataset.posman||el.dataset.fee||el.dataset.bind||el.dataset.notes||el.dataset.sig) return;
     if(map[i]!=null) el.innerHTML=map[i];
   });
 }

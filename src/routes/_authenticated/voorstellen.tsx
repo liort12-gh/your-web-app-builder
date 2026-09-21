@@ -14,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/voorstellen")({
       },
       { property: "og:title", content: "Mijn voorstellen" },
       { property: "og:description", content: "Bekijk en beheer uw opgeslagen voorstellen." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
     ],
   }),

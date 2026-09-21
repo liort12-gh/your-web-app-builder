@@ -15,6 +15,8 @@ export const Route = createFileRoute("/_authenticated/team")({
       },
       { property: "og:title", content: "Teambeheer" },
       { property: "og:description", content: "Beheer wie toegang heeft tot de omgeving." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
     ],
   }),

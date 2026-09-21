@@ -13,6 +13,8 @@ export const Route = createFileRoute("/reset-password")({
       },
       { property: "og:title", content: "Nieuw wachtwoord instellen" },
       { property: "og:description", content: "Kies een nieuw wachtwoord voor uw account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
     ],
   }),
