@@ -995,7 +995,7 @@ function renderPreview(){
       const i=el.dataset.oud; let v=el.textContent.trim();
       if(!S.oud) S.oud={};
       if(v===''){ delete S.oud[i]; el.textContent='\u2014'; el.classList.add('poa'); return; }
-      const f=euroFmt(v); if(f!==v){ v=f; el.textContent=v; }
+      const f=v.split('+').map(p=>euroFmt(p.trim())).join(' + '); if(f!==v){ v=f; el.textContent=v; }
       S.oud[i]=v; el.classList.remove('poa');
     });
   });
