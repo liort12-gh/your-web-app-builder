@@ -859,10 +859,24 @@ function pgPosOnly(){
 function pgPos(){
   if(S.docType==='pos') return pgPosOnly();
   const P=S.pos;
+  const isM=S.docType==='merchant';
+  const TOT=posTotals();
+  const anyQ=P.hw.some((r,i)=>r.on!==false && +(S.qty[i]||0)>0);
   let hw='';
   P.hw.forEach((r,i)=>{
     if(r.on===false) return;
     const t=hwTarief(r);
+    if(isM){
+      const q=+(S.qty[i]||0);
+      if(anyQ && q<=0) return;
+      const unit=posNum(t);
+      const line=(q>0 && unit>0)?money(q*unit):'';
+      hw+=`<tr class="m"><td class="ic">${TERM_SVG}</td><td class="nm" contenteditable data-pos="hw.${i}.name">${esc(r.name)}${r.nieuw?'<span class="nieuw">Nieuw</span>':''}</td>`+
+          `<td class="pr2 qtycell">${anyQ?q:''}</td>`+
+          `<td class="pr2 posval${posGray(t)}" contenteditable data-posman="${i}">${esc(t)}</td>`+
+          `<td class="pr2 posval">${line}</td></tr>`;
+      return;
+    }
     hw+=`<tr class="m"><td class="ic">${TERM_SVG}</td><td class="nm" contenteditable data-pos="hw.${i}.name">${esc(r.name)}${r.nieuw?'<span class="nieuw">Nieuw</span>':''}</td>`+
         `<td class="pr2 posval${posGray(r.def)}" contenteditable data-pos="hw.${i}.def">${esc(r.def)}</td>`+
         `<td class="pr2 posval${posGray(t)}" contenteditable data-posman="${i}">${esc(t)}</td></tr>`;
