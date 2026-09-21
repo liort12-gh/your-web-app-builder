@@ -125,6 +125,8 @@ function RequestAccessPage() {
                 />
               </div>
 
+              {error && <p className="text-sm text-destructive">{error}</p>}
+
               <button
                 type="submit"
                 disabled={busy}
