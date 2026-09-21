@@ -476,7 +476,8 @@ function renderSidebar(){
   if(vgl) vgl.addEventListener('change',()=>{ S.vergelijk=vgl.checked; renderSidebar(); renderPreview(); });
   const vglL=sb.querySelector('#vglLabel');
   if(vglL) vglL.addEventListener('input',()=>{ S.vergelijkLabel=vglL.value; renderPreview(); });
-  sb.querySelectorAll('input[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; renderPreview(); }));
+  sb.querySelectorAll('input[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; if(S.docType==='merchant'){renderSidebar();} renderPreview(); }));
+  sb.querySelectorAll('[data-qty]').forEach(el=>el.addEventListener('input',()=>{ S.qty[el.dataset.qty]=Math.max(0,parseInt(el.value)||0); renderPreview(); }));
   sb.querySelectorAll('input[data-r]').forEach(el=>el.addEventListener('change',()=>{S.rows[el.dataset.r].on=el.checked; syncCatBoxes(); renderPreview();}));
   sb.querySelectorAll('input[data-cat]').forEach(el=>{
     el.addEventListener('change',()=>{
