@@ -448,18 +448,9 @@ function renderSidebar(){
   }
   if(S.pages.pos){
     h+=`<h3>POS hardware</h3>`;
-    if(S.docType==='merchant'){
-      S.pos.hw.forEach((r,i)=>{
-        const q=+(S.qty[i]||0);
-        h+=`<div class="qrow"><label class="qname"><input type="checkbox" data-hw="${i}" ${r.on===false?'':'checked'}> ${esc(r.name)}</label>`+
-           `<input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-qty="${i}" value="${q||''}" ${r.on===false?'disabled':''}></div>`;
-      });
-      h+=`<div class="hint">Vul per device het aantal terminals in. Alleen devices met een aantal komen in het voorstel; het totaal eenmalig wordt automatisch berekend.</div>`;
-    } else {
-      S.pos.hw.forEach((r,i)=>{
-        h+=`<label class="rowchk"><input type="checkbox" data-hw="${i}" ${r.on===false?'':'checked'}> ${esc(r.name)}</label>`;
-      });
-    }
+    S.pos.hw.forEach((r,i)=>{
+      h+=`<label class="rowchk"><input type="checkbox" data-hw="${i}" ${r.on===false?'':'checked'}> ${esc(r.name)}</label>`;
+    });
   }
   h+=`<h3>Betaalmethoden</h3>`;
   let cat='';
@@ -476,8 +467,7 @@ function renderSidebar(){
   if(vgl) vgl.addEventListener('change',()=>{ S.vergelijk=vgl.checked; renderSidebar(); renderPreview(); });
   const vglL=sb.querySelector('#vglLabel');
   if(vglL) vglL.addEventListener('input',()=>{ S.vergelijkLabel=vglL.value; renderPreview(); });
-  sb.querySelectorAll('input[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; if(S.docType==='merchant'){renderSidebar();} renderPreview(); }));
-  sb.querySelectorAll('[data-qty]').forEach(el=>el.addEventListener('input',()=>{ S.qty[el.dataset.qty]=Math.max(0,parseInt(el.value)||0); renderPreview(); }));
+  sb.querySelectorAll('input[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; renderPreview(); }));
   sb.querySelectorAll('input[data-r]').forEach(el=>el.addEventListener('change',()=>{S.rows[el.dataset.r].on=el.checked; syncCatBoxes(); renderPreview();}));
   sb.querySelectorAll('input[data-cat]').forEach(el=>{
     el.addEventListener('change',()=>{
@@ -764,7 +754,6 @@ const FLAGS={NL:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#21
 BE:`<svg viewBox="0 0 30 20"><rect width="10" height="20" fill="#000"/><rect x="10" width="10" height="20" fill="#FDDA24"/><rect x="20" width="10" height="20" fill="#EF3340"/></svg>`,
 DE:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#FFCC00"/><rect width="30" height="13.33" fill="#DD0000"/><rect width="30" height="6.67" fill="#000"/></svg>`};
 const POSCOLS=`<colgroup><col style="width:11mm"><col><col style="width:32mm"><col style="width:32mm"></colgroup>`;
-const POSCOLS5=`<colgroup><col style="width:11mm"><col><col style="width:18mm"><col style="width:28mm"><col style="width:28mm"></colgroup>`;
 
 function parsePrice(s){
   if(!s) return null;
@@ -870,24 +859,10 @@ function pgPosOnly(){
 function pgPos(){
   if(S.docType==='pos') return pgPosOnly();
   const P=S.pos;
-  const isM=S.docType==='merchant';
-  const TOT=posTotals();
-  const anyQ=P.hw.some((r,i)=>r.on!==false && +(S.qty[i]||0)>0);
   let hw='';
   P.hw.forEach((r,i)=>{
     if(r.on===false) return;
     const t=hwTarief(r);
-    if(isM){
-      const q=+(S.qty[i]||0);
-      if(anyQ && q<=0) return;
-      const unit=posNum(t);
-      const line=(q>0 && unit>0)?money(q*unit):'';
-      hw+=`<tr class="m"><td class="ic">${TERM_SVG}</td><td class="nm" contenteditable data-pos="hw.${i}.name">${esc(r.name)}${r.nieuw?'<span class="nieuw">Nieuw</span>':''}</td>`+
-          `<td class="pr2 qtycell">${anyQ?q:''}</td>`+
-          `<td class="pr2 posval${posGray(t)}" contenteditable data-posman="${i}">${esc(t)}</td>`+
-          `<td class="pr2 posval">${line}</td></tr>`;
-      return;
-    }
     hw+=`<tr class="m"><td class="ic">${TERM_SVG}</td><td class="nm" contenteditable data-pos="hw.${i}.name">${esc(r.name)}${r.nieuw?'<span class="nieuw">Nieuw</span>':''}</td>`+
         `<td class="pr2 posval${posGray(r.def)}" contenteditable data-pos="hw.${i}.def">${esc(r.def)}</td>`+
         `<td class="pr2 posval${posGray(t)}" contenteditable data-posman="${i}">${esc(t)}</td></tr>`;
@@ -911,14 +886,10 @@ function pgPos(){
     <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>Tarief overzicht POS transacties</h2>
     <p class="lead" style="margin-bottom:3mm" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.</p>
     <h3 class="posh" style="margin-top:0" contenteditable>POS Hardware</h3>
-    ${isM?`<table class="ptable pos">${POSCOLS5}<tbody>
-      <tr class="phead"><td colspan="2" contenteditable>HARDWARE</td><td class="vh" contenteditable>Aantal</td><td class="vh" contenteditable>Tarief per stuk</td><td class="vh" contenteditable>Totaal</td></tr>
-      ${hw}
-      <tr class="tot"><td colspan="3"></td><td class="pr2 lbl">Totaal eenmalig</td><td class="pr2 val">${money(TOT.one)}</td></tr>
-    </tbody></table>`:`<table class="ptable pos">${POSCOLS}<tbody>
+    <table class="ptable pos">${POSCOLS}<tbody>
       ${posHead('HARDWARE','Tarief default','Tarief '+bedrijf)}
       ${hw}
-    </tbody></table>`}
+    </tbody></table>
     <table class="ptable pos">${POSCOLS}<tbody>
       ${posHead('MAANDELIJKS','','Tarief')}
       ${mo}
