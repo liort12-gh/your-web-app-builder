@@ -325,7 +325,8 @@ document.getElementById('brandmark').innerHTML = MARK;
 
 /* ---------- taal ---------- */
 /* De app zelf blijft Nederlands; alleen het voorstel schakelt tussen NL en EN. */
-function L(nl,en){ return (typeof S!=='undefined' && S && S.lang==='en') ? en : nl; }
+function curLang(){ try{ return (S && S.lang) || 'nl'; }catch(e){ return 'nl'; } }
+function L(nl,en){ return curLang()==='en' ? en : nl; }
 function POA(){ return L('Prijs op aanvraag','Price on request'); }
 function NVT(){ return L('n.v.t','n/a'); }
 const RX_POA=/aanvraag|on request/i;
@@ -339,7 +340,7 @@ const CAT_LABELS={
   'WALLET':{nl:'WALLET',en:'WALLETS'},
   'GIFTCARDS':{nl:'GIFTCARDS',en:'GIFT CARDS'}
 };
-function catLabel(cat){ const c=CAT_LABELS[cat]; return c? (S.lang==='en'?c.en:c.nl) : cat; }
+function catLabel(cat){ const c=CAT_LABELS[cat]; return c? (curLang()==='en'?c.en:c.nl) : cat; }
 
 /* ---------- default row sets ---------- */
 function baseRows(lang){
@@ -404,7 +405,7 @@ function posDefaults(lang){
 }
 
 function defaultState(dt, lang){
-  const lg = lang || ((typeof S!=='undefined' && S && S.lang) ? S.lang : 'nl');
+  const lg = lang || curLang();
   const en = lg==='en';
   const today = new Date().toLocaleDateString(en?'en-GB':'nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
   return {
@@ -699,7 +700,7 @@ function pgAgreement(){
   return `<div class="page legal"><div class="pad">
     ${logoBlock()}
     <h2 contenteditable>${isP?'Samenwerkingsvoorstel':'Samenwerkingsovereenkomst'}</h2>
-    ${S.lang==='en'?`<p style="font-size:7.6pt;line-height:1.5;color:#5A6B76;margin-bottom:2mm" contenteditable>The agreement below is provided in Dutch; the Dutch text is the legally binding version.</p>`:''}
+    ${curLang()==='en'?`<p style="font-size:7.6pt;line-height:1.5;color:#5A6B76;margin-bottom:2mm" contenteditable>The agreement below is provided in Dutch; the Dutch text is the legally binding version.</p>`:''}
     ${isP?'':`<p style="font-size:7.6pt;line-height:1.5;color:#26313A;margin-bottom:3mm" contenteditable>Partijen bij deze Samenwerkingsovereenkomst zijn <b data-bind="bedrijf">${esc(S.fields.bedrijf)}</b> ("Merchant") en MultiSafepay B.V. Deze Samenwerkingsovereenkomst richt zich op de levering van de in deze Overeenkomst en in de Algemene Voorwaarden MultiSafepay gespecificeerde diensten ("Diensten") van MultiSafepay aan Merchant.</p>`}
     <div class="legalbody" contenteditable>${isP?LEGAL_PARTNER:LEGAL_MERCHANT}</div>
     ${foot()}
