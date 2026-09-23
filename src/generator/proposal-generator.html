@@ -478,7 +478,7 @@ function renderSidebar(){
   ${(isP||S.pages.pos)?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
   ${S.docType==='merchant'?`<h3>Vergelijking</h3>
     <label class="chk"><input type="checkbox" id="vglOn" ${S.vergelijk?'checked':''}> Kolom met huidige tarieven</label>
-    ${S.vergelijk?`<div class="fld" style="margin-top:6px"><label>Koptekst kolom</label><input id="vglLabel" value="${esc(S.vergelijkLabel||'Huidig tarief')}"></div>
+    ${S.vergelijk?`<div class="fld" style="margin-top:6px"><label>Koptekst kolom</label><input id="vglLabel" value="${esc(S.vergelijkLabel||L('Huidig tarief','Current rate'))}"></div>
     <div class="hint">Vul per betaalmethode het huidige tarief in door in de tabel op de streep te klikken.</div>`:''}`:''}
   <h3>Pagina's</h3>`;
   const pageDefs = S.docType==='pos'
@@ -615,13 +615,13 @@ function pgBenefits(){
         <li>${L('Win verloren omzet terug met Second Chance e-mails','Win back lost revenue with Second Chance emails')}</li><li>${L('Integreer betaalmethoden direct in '+(isP?'de checkout van uw klanten':'uw checkout'),'Integrate payment methods directly into '+(isP?"your clients' checkout":'your checkout'))}</li><li>${L('Onthoud en versleutel data voor razendsnelle herhaalaankopen','Store and encrypt data for lightning-fast repeat purchases')}</li><li>${L('Optimaliseer de betaalervaring voor mobile devices','Optimise the payment experience for mobile devices')}</li></ul></div>
       <div class="benefit" contenteditable><h4>${L('Verkoop internationaal','Sell internationally')}</h4><div class="tag">${L('Breid gemakkelijk uit naar het buitenland','Expand abroad with ease')}</div><ul>
         <li>${L('Bied de juiste betaalmethoden voor de juiste markt aan','Offer the right payment methods for the right market')}</li><li>${L('Accepteer en verwerk tot wel 12 valuta','Accept and process up to 12 currencies')}</li><li>${L("Toon betaalpagina's in de juiste taal",'Show payment pages in the right language')}</li></ul></div>
-      <div class="benefit" contenteditable><h4>Stroomlijn facturatie en boekhouding</h4><div class="tag">Houd de administratie overzichtelijk</div><ul>
-        <li>Creëer een eigen B2B-facturatieprocedure — zonder kennis van coderen</li><li>Beheer orders tot in de puntjes: splits betalingen en verstuur betaallinks op maat</li><li>Synchroniseer met onze partners en automatiseer de boekhouding</li></ul></div>
-      <div class="benefit" contenteditable><h4>Boost creditcardbetalingen</h4><div class="tag">Vereenvoudig het betaalproces voor kaarten</div><ul>
-        <li>Geniet van een snellere, versimpelde end-to-end betaalstroom</li><li>Verifieer en authentiseer betaalgegevens direct in de checkout</li><li>Geef dynamisch velden en benodigde informatie weer</li></ul></div>
+      <div class="benefit" contenteditable><h4>${L('Stroomlijn facturatie en boekhouding','Streamline invoicing and accounting')}</h4><div class="tag">${L('Houd de administratie overzichtelijk','Keep your administration clear')}</div><ul>
+        <li>${L('Creëer een eigen B2B-facturatieprocedure — zonder kennis van coderen','Create your own B2B invoicing process — no coding required')}</li><li>${L('Beheer orders tot in de puntjes: splits betalingen en verstuur betaallinks op maat','Manage orders down to the detail: split payments and send tailored payment links')}</li><li>${L('Synchroniseer met onze partners en automatiseer de boekhouding','Sync with our partners and automate your bookkeeping')}</li></ul></div>
+      <div class="benefit" contenteditable><h4>${L('Boost creditcardbetalingen','Boost credit card payments')}</h4><div class="tag">${L('Vereenvoudig het betaalproces voor kaarten','Simplify the card payment process')}</div><ul>
+        <li>${L('Geniet van een snellere, versimpelde end-to-end betaalstroom','Enjoy a faster, simplified end-to-end payment flow')}</li><li>${L('Verifieer en authentiseer betaalgegevens direct in de checkout','Verify and authenticate payment details directly in the checkout')}</li><li>${L('Geef dynamisch velden en benodigde informatie weer','Display fields and required information dynamically')}</li></ul></div>
     </div>
     <div class="hr"></div>
-    <p class="lead" style="text-align:center;margin:0 auto" contenteditable>Meer dan 18.000 Europese bedrijven maken al gebruik van onze uitgebreide toolkit om hun bedrijfsprocessen te optimaliseren.</p>
+    <p class="lead" style="text-align:center;margin:0 auto" contenteditable>${L('Meer dan 18.000 Europese bedrijven maken al gebruik van onze uitgebreide toolkit om hun bedrijfsprocessen te optimaliseren.','More than 18,000 European businesses already use our extensive toolkit to optimise their business processes.')}</p>
     ${foot()}
   </div></div>`;
 }
@@ -699,6 +699,7 @@ function pgAgreement(){
   return `<div class="page legal"><div class="pad">
     ${logoBlock()}
     <h2 contenteditable>${isP?'Samenwerkingsvoorstel':'Samenwerkingsovereenkomst'}</h2>
+    ${S.lang==='en'?`<p style="font-size:7.6pt;line-height:1.5;color:#5A6B76;margin-bottom:2mm" contenteditable>The agreement below is provided in Dutch; the Dutch text is the legally binding version.</p>`:''}
     ${isP?'':`<p style="font-size:7.6pt;line-height:1.5;color:#26313A;margin-bottom:3mm" contenteditable>Partijen bij deze Samenwerkingsovereenkomst zijn <b data-bind="bedrijf">${esc(S.fields.bedrijf)}</b> ("Merchant") en MultiSafepay B.V. Deze Samenwerkingsovereenkomst richt zich op de levering van de in deze Overeenkomst en in de Algemene Voorwaarden MultiSafepay gespecificeerde diensten ("Diensten") van MultiSafepay aan Merchant.</p>`}
     <div class="legalbody" contenteditable>${isP?LEGAL_PARTNER:LEGAL_MERCHANT}</div>
     ${foot()}
@@ -713,24 +714,24 @@ function pgFinancieel(){
   return `<div class="page"><div class="pad">
     ${logoBlock()}
     <h2 class="sec" contenteditable>${copyOf('finTitle')}</h2>
-    <p class="lead" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (€) en zijn exclusief BTW. Tarieven uitgedrukt in een percentage (%) worden berekend over het totale transactiebedrag. Alle genoemde tarieven zijn onder voorbehoud van acceptatie, wijzigingen en fouten.</p>
+    <p class="lead" contenteditable>${L('Tarieven in dit voorstel worden vermeld in Euro (€) en zijn exclusief BTW. Tarieven uitgedrukt in een percentage (%) worden berekend over het totale transactiebedrag. Alle genoemde tarieven zijn onder voorbehoud van acceptatie, wijzigingen en fouten.','Rates in this proposal are stated in Euro (€) and exclude VAT. Rates expressed as a percentage (%) are calculated on the total transaction amount. All rates are subject to acceptance, changes and errors.')}</p>
     <div class="finwrap">
       <div>
-        <div class="cyansub">Tarieven</div>
-        ${feeItem('Transactiekosten','txkosten','Deze kosten rekenen wij voor elke online transactie. Dit tarief is reeds verwerkt in de vermelde tarieven per betaalmethode.')}
-        ${feeItem('Refund','refund','Deze kosten rekenen wij voor elke refund (creditering) die gedaan wordt.')}
-        ${feeItem('Uitbetalen (per batch)','payout','Deze kosten rekenen wij voor elke uitbetaling van het saldo. U kunt zelf aangeven hoe vaak en op welke dagen u automatisch uitbetaald wenst te worden.')}
-        ${feeItem('VIBAN Solution','viban','Deze kosten rekenen wij voor elke VIBAN-transactie. Dit wordt standaard opgeteld bij de bestaande kosten (SEPA Direct Debit, Bank transfer, Refunds).')}
+        <div class="cyansub">${L('Tarieven','Rates')}</div>
+        ${feeItem(L('Transactiekosten','Transaction fee'),'txkosten',L('Deze kosten rekenen wij voor elke online transactie. Dit tarief is reeds verwerkt in de vermelde tarieven per betaalmethode.','We charge this fee for every online transaction. It is already included in the rates listed per payment method.'))}
+        ${feeItem('Refund','refund',L('Deze kosten rekenen wij voor elke refund (creditering) die gedaan wordt.','We charge this fee for every refund (credit) that is processed.'))}
+        ${feeItem(L('Uitbetalen (per batch)','Payout (per batch)'),'payout',L('Deze kosten rekenen wij voor elke uitbetaling van het saldo. U kunt zelf aangeven hoe vaak en op welke dagen u automatisch uitbetaald wenst te worden.','We charge this fee for every payout of your balance. You decide how often and on which days you want to be paid out automatically.'))}
+        ${feeItem('VIBAN Solution','viban',L('Deze kosten rekenen wij voor elke VIBAN-transactie. Dit wordt standaard opgeteld bij de bestaande kosten (SEPA Direct Debit, Bank transfer, Refunds).','We charge this fee for every VIBAN transaction. It is added by default to the existing fees (SEPA Direct Debit, Bank transfer, Refunds).'))}
       </div>
       <div>
-        <div class="cyansub">Incidentele kosten</div>
-        ${feeItem('Retrieval creditcard','retrieval','Deze kosten rekenen wij op het moment dat de consument vragen stelt aan de creditcardmaatschappij over één van uw transacties. Een duidelijke transactieomschrijving voorkomt dit vrijwel volledig.')}
-        ${feeItem('Chargeback creditcard','chargeback','Deze kosten rekenen wij wanneer een consument geld terugvordert via de creditcardmaatschappij. Wij onderzoeken elke chargeback en vechten deze waar mogelijk aan.')}
-        ${feeItem('Reversal SEPA Direct Debit','reversal','Deze kosten rekenen wij bij stornering van een automatische incasso tot 8 weken na de transactiedatum.')}
-        ${feeItem('MOI Dossiertarief SEPA DD','moi','Deze kosten rekenen wij bij stornering van een automatische incasso vanaf 8 weken na de transactiedatum.')}
+        <div class="cyansub">${L('Incidentele kosten','Incidental costs')}</div>
+        ${feeItem(L('Retrieval creditcard','Credit card retrieval'),'retrieval',L('Deze kosten rekenen wij op het moment dat de consument vragen stelt aan de creditcardmaatschappij over één van uw transacties. Een duidelijke transactieomschrijving voorkomt dit vrijwel volledig.','We charge this fee when a consumer asks the credit card company questions about one of your transactions. A clear transaction description prevents this almost entirely.'))}
+        ${feeItem(L('Chargeback creditcard','Credit card chargeback'),'chargeback',L('Deze kosten rekenen wij wanneer een consument geld terugvordert via de creditcardmaatschappij. Wij onderzoeken elke chargeback en vechten deze waar mogelijk aan.','We charge this fee when a consumer reclaims money through the credit card company. We investigate every chargeback and dispute it where possible.'))}
+        ${feeItem('Reversal SEPA Direct Debit','reversal',L('Deze kosten rekenen wij bij stornering van een automatische incasso tot 8 weken na de transactiedatum.','We charge this fee when a direct debit is reversed up to 8 weeks after the transaction date.'))}
+        ${feeItem(L('MOI Dossiertarief SEPA DD','MOI case fee SEPA DD'),'moi',L('Deze kosten rekenen wij bij stornering van een automatische incasso vanaf 8 weken na de transactiedatum.','We charge this fee when a direct debit is reversed more than 8 weeks after the transaction date.'))}
       </div>
     </div>
-    ${S.pages.notes?`<div class="notes"><h4 contenteditable>Aanvullende afspraken</h4><div contenteditable data-notes>${esc(S.fields.notes).replace(/\n/g,'<br>')}</div></div>`:''}
+    ${S.pages.notes?`<div class="notes"><h4 contenteditable>${L('Aanvullende afspraken','Additional arrangements')}</h4><div contenteditable data-notes>${esc(S.fields.notes).replace(/\n/g,'<br>')}</div></div>`:''}
     ${foot()}
   </div></div>`;
 }
@@ -748,11 +749,11 @@ function pgTabel(){
   const cmp = S.docType==='merchant' && S.vergelijk;
   const cols = cmp?4:3;
   const theadHtml=`<thead class="thead"><tr><td></td><td></td>`+
-    (cmp?`<td class="oldh" contenteditable data-cmplabel>${esc(S.vergelijkLabel||'Huidig tarief')}</td>`:'')+
-    `<td>${isP?'INKOOPTARIEF PER<br>BETAALMETHODE':'TARIEF PER<br>BETAALMETHODE'}</td></tr></thead>`;
+    (cmp?`<td class="oldh" contenteditable data-cmplabel>${esc(S.vergelijkLabel||L('Huidig tarief','Current rate'))}</td>`:'')+
+    `<td>${L(isP?'INKOOPTARIEF PER<br>BETAALMETHODE':'TARIEF PER<br>BETAALMETHODE', isP?'BUY RATE PER<br>PAYMENT METHOD':'RATE PER<br>PAYMENT METHOD')}</td></tr></thead>`;
   let bodies='';
   for(const g of cats){
-    let b=`<tr class="cat"><td colspan="${cols}">${g.cat}</td></tr>`;
+    let b=`<tr class="cat"><td colspan="${cols}">${catLabel(g.cat)}</td></tr>`;
     for(const r of g.rows){
       const i=S.rows.indexOf(r), poa=RX_POA.test(r.price);
       const oud=(S.oud||{})[i]||'';
@@ -764,10 +765,10 @@ function pgTabel(){
   }
   return `<div class="page tabelpage"><div class="pad">
     ${logoBlock()}
-    ${isP?`<h2 class="sec" contenteditable>Tarief overzicht ECOM transacties</h2>
-    <p class="lead" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.</p>`:''}
+    ${isP?`<h2 class="sec" contenteditable>${L('Tarief overzicht ECOM transacties','Rate overview ECOM transactions')}</h2>
+    <p class="lead" contenteditable>${L('Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.','Rates in this proposal are stated in Euro (\u20ac) and exclude VAT. The products and services below are made available by MultiSafepay to the partner to offer to its affiliates.')}</p>`:''}
     <table class="ptable">${theadHtml}${bodies}</table>
-    <div class="smallnote" contenteditable>Indien het huidig aantal transacties en de daarbij behorende transactiewaarde aanzienlijk onder het geschatte gemiddelde ligt, of indien meer dan 10% van het totaal van de transacties afkomstig is van buiten de EU en/of via Business/Company creditcards verwerkt wordt, dan behoudt MultiSafepay zich het recht voor om deze kosten aan te passen.</div>
+    <div class="smallnote" contenteditable>${L('Indien het huidig aantal transacties en de daarbij behorende transactiewaarde aanzienlijk onder het geschatte gemiddelde ligt, of indien meer dan 10% van het totaal van de transacties afkomstig is van buiten de EU en/of via Business/Company creditcards verwerkt wordt, dan behoudt MultiSafepay zich het recht voor om deze kosten aan te passen.','If the current number of transactions and the related transaction value are significantly below the estimated average, or if more than 10% of all transactions originate from outside the EU and/or are processed via business/company credit cards, MultiSafepay reserves the right to adjust these fees.')}</div>
     ${foot()}
   </div></div>`;
 }
@@ -896,21 +897,21 @@ function pgPosOnly(){
   });
   return `<div class="page pospage"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>Offerte POS hardware</h2>
-    <p class="lead" style="margin-bottom:3mm" contenteditable>Tarieven in deze offerte worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan ${bedrijf}.</p>
+    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>${L('Offerte POS hardware','POS hardware quotation')}</h2>
+    <p class="lead" style="margin-bottom:3mm" contenteditable>${L('Tarieven in deze offerte worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan '+bedrijf+'.','Rates in this quotation are stated in Euro (\u20ac) and exclude VAT. The products and services below are made available by MultiSafepay to '+bedrijf+'.')}</p>
     <h3 class="posh" style="margin-top:0" contenteditable>POS Hardware</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('HARDWARE','Aantal','Tarief '+bedrijf)}
+      ${posHead('HARDWARE',L('Aantal','Quantity'),L('Tarief ','Rate ')+bedrijf)}
       ${hw}
-      <tr class="tot"><td colspan="2"></td><td class="pr2 lbl">Totaal eenmalig</td><td class="pr2 val">${money(TOT.one)}</td></tr>
+      <tr class="tot"><td colspan="2"></td><td class="pr2 lbl">${L('Totaal eenmalig','Total one-off')}</td><td class="pr2 val">${money(TOT.one)}</td></tr>
     </tbody></table>
-    ${k>0?`<div class="posnote" style="color:#4A555E" contenteditable>Alle hardwaretarieven zijn inclusief ${String(k).replace('.',',')}% korting op het defaulttarief.</div>`:''}
-    <h3 class="posh" contenteditable>Maandelijkse kosten</h3>
+    ${k>0?`<div class="posnote" style="color:#4A555E" contenteditable>${L('Alle hardwaretarieven zijn inclusief '+String(k).replace('.',',')+'% korting op het defaulttarief.','All hardware rates include a '+String(k).replace('.',',')+'% discount on the default rate.')}</div>`:''}
+    <h3 class="posh" contenteditable>${L('Maandelijkse kosten','Monthly costs')}</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('MAANDELIJKS','','Tarief per terminal')}
+      ${posHead(L('MAANDELIJKS','MONTHLY'),'',L('Tarief per terminal','Rate per terminal'))}
       ${mo}
     </tbody></table>
-    <div class="posnote" contenteditable>* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.</div>
+    <div class="posnote" contenteditable>${L('* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.','* Only applicable to SmartPOS devices<br>** Applicable to both SmartPOS and CTAP devices. The connection fee is only charged when a terminal is linked to a MultiSafepay account, not for an inactive fleet.')}</div>
     ${foot()}
   </div></div>`;
 }
@@ -941,34 +942,34 @@ function pgPos(){
   const bedrijf=esc(S.fields.bedrijf||'');
   return `<div class="page pospage"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>Tarief overzicht POS transacties</h2>
-    <p class="lead" style="margin-bottom:3mm" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.</p>
+    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>${L('Tarief overzicht POS transacties','Rate overview POS transactions')}</h2>
+    <p class="lead" style="margin-bottom:3mm" contenteditable>${L('Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.','Rates in this proposal are stated in Euro (\u20ac) and exclude VAT. The products and services below are made available by MultiSafepay to the partner to offer to its affiliates.')}</p>
     <h3 class="posh" style="margin-top:0" contenteditable>POS Hardware</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('HARDWARE','Tarief default','Tarief '+bedrijf)}
+      ${posHead('HARDWARE',L('Tarief default','Default rate'),L('Tarief ','Rate ')+bedrijf)}
       ${hw}
     </tbody></table>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('MAANDELIJKS','','Tarief')}
+      ${posHead(L('MAANDELIJKS','MONTHLY'),'',L('Tarief','Rate'))}
       ${mo}
     </tbody></table>
-    <div class="posnote" contenteditable>* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.</div>
+    <div class="posnote" contenteditable>${L('* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.','* Only applicable to SmartPOS devices<br>** Applicable to both SmartPOS and CTAP devices. The connection fee is only charged when a terminal is linked to a MultiSafepay account, not for an inactive fleet.')}</div>
     <h3 class="posh" contenteditable>Tap to Pay / SoftPOS</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('FEE COMPONENT','','Tarief')}
+      ${posHead('FEE COMPONENT','',L('Tarief','Rate'))}
       ${ttp}
     </tbody></table>
     <h3 class="posh" contenteditable>POS payments</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('DEBIT CARDS DOMESTIC (Maestro, VPAY, VISA, Mastercard)','','Tarief')}
+      ${posHead('DEBIT CARDS DOMESTIC (Maestro, VPAY, VISA, Mastercard)','',L('Tarief','Rate'))}
       ${payRows(P.dom,'dom','flag')}
     </tbody></table>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('DEBIT CARDS NON-DOMESTIC (EEA)','','Tarief')}
+      ${posHead('DEBIT CARDS NON-DOMESTIC (EEA)','',L('Tarief','Rate'))}
       ${payRows(P.nondom,'nondom','card')}
     </tbody></table>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('CREDIT CARDS','','Tarief')}
+      ${posHead('CREDIT CARDS','',L('Tarief','Rate'))}
       ${payRows(P.credit,'credit','card')}
     </tbody></table>
     ${foot()}
@@ -979,13 +980,13 @@ function pgSig(){
   const isP=S.docType==='partner';
   return `<div class="page sig"><div class="pad">
     ${logoBlock()}
-    <p style="font-size:9pt;margin-bottom:2mm" contenteditable>Aldus overeengekomen, opgemaakt en ondertekend te Amsterdam:</p>
-    <p style="font-size:9.5pt;font-weight:600">Namens MultiSafepay</p>
+    <p style="font-size:9pt;margin-bottom:2mm" contenteditable>${L('Aldus overeengekomen, opgemaakt en ondertekend te Amsterdam:','Agreed, drawn up and signed in Amsterdam:')}</p>
+    <p style="font-size:9.5pt;font-weight:600">${L('Namens MultiSafepay','On behalf of MultiSafepay')}</p>
     <div class="sigrow">
       <div class="who"><b>MultiSafepay</b><span>Olaf Wouter Geurs</span></div>
-      <div class="who"><b>Stichting derdengelden</b><span>Niels Alexander Geurs</span></div>
+      <div class="who"><b>${L('Stichting derdengelden','Stichting derdengelden (client funds foundation)')}</b><span>Niels Alexander Geurs</span></div>
     </div>
-    <h3 class="gd">Gegevens ${isP?'partner':'merchant'}</h3>
+    <h3 class="gd">${L('Gegevens '+(isP?'partner':'merchant'),(isP?'Partner':'Merchant')+' details')}</h3>
     <div class="sigfields">
       ${sigFieldDefs(isP).map(f=>{
         if(f.sub) return `<div class="sigsub">${f.sub}</div>`;
@@ -1031,7 +1032,7 @@ function renderPreview(){
     if(last && last.getBoundingClientRect().bottom>limit) pg.classList.add('xtight');
   });
   // page numbers
-  pv.querySelectorAll('.page').forEach((p,i)=>{ const pn=p.querySelector('.pn'); if(pn) pn.textContent='Paginanummer: '+(i+1); });
+  pv.querySelectorAll('.page').forEach((p,i)=>{ const pn=p.querySelector('.pn'); if(pn) pn.textContent=L('Paginanummer: ','Page: ')+(i+1); });
   // bindings: price edits (Mastercard <-> Visa <-> Maestro stay identical)
   const SYNC=['mastercard','visa','maestro'];
   function syncCard(el, valOverride){
@@ -1684,15 +1685,15 @@ const SHARESKEY='msp_shares_v1';
 function sigFieldDefs(isP){
   return [
     {key:'partij', label:(isP?'Partner':'Merchant')+':'},
-    {key:'datumplaats', label:'Datum en plaats'},
-    {key:'bedrijfsnaam', label:'Bedrijfsnaam/handelsnaam', small:'(zoals opgegeven bij Kamer van Koophandel)'},
-    {key:'kvk', label:'KvK-nummer:'},
-    {key:'bedrijfsvorm', label:'Bedrijfsvorm:'},
-    {sub:'Contactgegevens'},
-    {key:'contactnaam', label:'Voor- en achternaam:'},
-    {key:'telefoon', label:'Telefoonnummer:'},
-    {key:'email', label:'E-mailadres:'},
-    {key:'handtekening', label:'Handtekening tekenbevoegde', image:true, gap:true},
+    {key:'datumplaats', label:L('Datum en plaats','Date and place')},
+    {key:'bedrijfsnaam', label:L('Bedrijfsnaam/handelsnaam','Company/trade name'), small:L('(zoals opgegeven bij Kamer van Koophandel)','(as registered with the Chamber of Commerce)')},
+    {key:'kvk', label:L('KvK-nummer:','Chamber of Commerce number:')},
+    {key:'bedrijfsvorm', label:L('Bedrijfsvorm:','Legal form:')},
+    {sub:L('Contactgegevens','Contact details')},
+    {key:'contactnaam', label:L('Voor- en achternaam:','First and last name:')},
+    {key:'telefoon', label:L('Telefoonnummer:','Phone number:')},
+    {key:'email', label:L('E-mailadres:','Email address:')},
+    {key:'handtekening', label:L('Handtekening tekenbevoegde','Signature of authorised signatory'), image:true, gap:true},
   ];
 }
 
