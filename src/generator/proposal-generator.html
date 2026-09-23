@@ -210,7 +210,7 @@ h3.posh{font-size:10pt;font-weight:700;margin:3mm 0 1.5mm}
 .sigfields .dots.sigimg img{max-height:16mm;max-width:70mm;display:block}
 
 /* ============ SIGN MODE (prospect) ============ */
-body.signmode #docTypeSeg,body.signmode #savedSel,body.signmode #saveBtn,body.signmode #saveAsBtn,
+body.signmode #docTypeSeg,body.signmode #langSeg,body.signmode #savedSel,body.signmode #saveBtn,body.signmode #saveAsBtn,
 body.signmode #delBtn,body.signmode #resetBtn,body.signmode #shareBtn,body.signmode #pdfBtn,
 body.signmode #htmlBtn,body.signmode #libBtn,body.signmode #calcBtn{display:none!important}
 .signpanel h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8A97A0;margin:16px 0 8px}
@@ -273,6 +273,10 @@ html,body,*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
       <button data-dt="partner">Partner</button>
       <button data-dt="pos">POS only</button>
     </div>
+    <div class="seg" id="langSeg" title="Taal van het voorstel" aria-label="Taal van het voorstel">
+      <button data-lang="nl">NL</button>
+      <button data-lang="en">EN</button>
+    </div>
     <div class="proposal-context">
       <select id="savedSel" title="Open een opgeslagen voorstel"><option value="">— Opgeslagen voorstellen —</option></select>
       <span id="saveState" class="savestate" role="status" aria-live="polite"></span>
@@ -319,72 +323,105 @@ const A = window.__ASSETS;
 const MARK = `<svg viewBox="0 0 48 49" xmlns="http://www.w3.org/2000/svg"><path fill="#00ABED" d="M0 0 L48 44 L48 49 L0 49 Z"/><path fill="#004970" d="M27 19 L48 0.5 L48 37.5 Z"/></svg>`;
 document.getElementById('brandmark').innerHTML = MARK;
 
+/* ---------- taal ---------- */
+/* De app zelf blijft Nederlands; alleen het voorstel schakelt tussen NL en EN. */
+function curLang(){ try{ return (S && S.lang) || 'nl'; }catch(e){ return 'nl'; } }
+function L(nl,en){ return curLang()==='en' ? en : nl; }
+function POA(){ return L('Prijs op aanvraag','Price on request'); }
+function NVT(){ return L('n.v.t','n/a'); }
+const RX_POA=/aanvraag|on request/i;
+const RX_PH=/n\.v\.t|n\/a|aanvraag|on request/i;
+const CAT_LABELS={
+  'CREDITCARDS':{nl:'CREDITCARDS',en:'CREDIT CARDS'},
+  'DEBIT CARDS':{nl:'DEBIT CARDS',en:'DEBIT CARDS'},
+  'ONLINE BANKING':{nl:'ONLINE BANKING',en:'ONLINE BANKING'},
+  'BANKOVERBOEKING & SEPA INCASSO':{nl:'BANKOVERBOEKING & SEPA INCASSO',en:'BANK TRANSFER & SEPA DIRECT DEBIT'},
+  'ACHTERAF BETALEN':{nl:'ACHTERAF BETALEN',en:'BUY NOW, PAY LATER'},
+  'WALLET':{nl:'WALLET',en:'WALLETS'},
+  'GIFTCARDS':{nl:'GIFTCARDS',en:'GIFT CARDS'}
+};
+function catLabel(cat){ const c=CAT_LABELS[cat]; return c? (curLang()==='en'?c.en:c.nl) : cat; }
+
 /* ---------- default row sets ---------- */
-function baseRows(){ return [
+function baseRows(lang){
+ const en=(lang||'nl')==='en';
+ const poa=en?'Price on request':'Prijs op aanvraag';
+ const P=(nl,e)=>en?e:nl;
+ return [
  {cat:'CREDITCARDS', key:'mastercard', name:'Mastercard', price:'1,40 %', on:true},
  {cat:'CREDITCARDS', key:'visa', name:'Visa', price:'1,40 %', on:true},
- {cat:'CREDITCARDS', key:'amex', name:'American Express', price:'Prijs op aanvraag', on:true},
- {cat:'CREDITCARDS', key:'cartesbancaires', name:'Cartes Bancaires (Frankrijk)', price:'Prijs op aanvraag', on:true},
+ {cat:'CREDITCARDS', key:'amex', name:'American Express', price:poa, on:true},
+ {cat:'CREDITCARDS', key:'cartesbancaires', name:P('Cartes Bancaires (Frankrijk)','Cartes Bancaires (France)'), price:poa, on:true},
  {cat:'DEBIT CARDS', key:'maestro', name:'Maestro', price:'1,40 %', on:true},
- {cat:'DEBIT CARDS', key:'bancontact', name:'Bancontact (+QR) (België)', price:'€ 0,12', on:true},
- {cat:'DEBIT CARDS', key:'postepay', name:'Postepay (Italië)', price:'Prijs op aanvraag', on:false},
- {cat:'DEBIT CARDS', key:'dankort', name:'Dankort (Denemarken)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'ideal', name:'iDEAL (+QR) (Nederland)', price:'€ 0,10', on:true},
- {cat:'ONLINE BANKING', key:'belfius', name:'Belfius (België)', price:'0,70 %', on:true},
- {cat:'ONLINE BANKING', key:'kbc', name:'KBC/CBC (België)', price:'0,70 %', on:true},
- {cat:'ONLINE BANKING', key:'eps', name:'EPS (Oostenrijk)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'mybank', name:'MyBank (Italië)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'przelewy24', name:'Przelewy24 (Polen)', price:'Prijs op aanvraag', on:true},
- {cat:'ONLINE BANKING', key:'trustly', name:'Trustly (Europa)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'trustpay', name:'TrustPay (Tsjechië)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'multibanco', name:'Multibanco (Portugal)', price:'Prijs op aanvraag', on:false},
- {cat:'BANKOVERBOEKING & SEPA INCASSO', key:'bankoverboeking', name:'Bankoverboeking', price:'€ 0,20', on:true},
- {cat:'BANKOVERBOEKING & SEPA INCASSO', key:'sepadd', name:'SEPA Direct Debit', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'bno', name:'MultiSafepay Betaal na Ontvangst (NL)', price:'Prijs op aanvraag', on:false},
- {cat:'ACHTERAF BETALEN', key:'bit', name:'MultiSafepay Betaal in Termijnen (NL)', price:'Prijs op aanvraag', on:false},
- {cat:'ACHTERAF BETALEN', key:'billink', name:'Billink (NL, BE & DE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'billink', name:'Billink B2B', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (NL, BE, DE, AT, CH)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (NL, BE, DE, AT, CH)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (NL, BE, DE, AT, CH)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (IT, ES, FR, PT, GR, SK, IE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (IT, ES, FR, PT, GR, SK, IE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (IT, ES, FR, PT, GR, SK, IE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'riverty', name:'Riverty (NL, BE en DE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'in3', name:'iDEAL in3 (NL)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'zinia', name:'Zinia by Santander (NL)', price:'Prijs op aanvraag', on:false},
- {cat:'WALLET', key:'paypal', name:'PayPal', price:'PayPal kosten', on:true},
- {cat:'WALLET', key:'applepay', name:'Apple Pay', price:'Credit-/Debitcard kosten', on:true},
- {cat:'WALLET', key:'googlepay', name:'Google Pay', price:'Credit-/Debitcard kosten', on:true},
- {cat:'WALLET', key:'amazonpay', name:'Amazon Pay', price:'Prijs op aanvraag', on:false},
- {cat:'WALLET', key:'mbway', name:'MB Way (Portugal)', price:'Prijs op aanvraag', on:false},
- {cat:'WALLET', key:'alipay', name:'Alipay', price:'Prijs op aanvraag', on:false},
- {cat:'WALLET', key:'wechatpay', name:'WeChat Pay', price:'Prijs op aanvraag', on:false},
- {cat:'GIFTCARDS', key:'giftcards', name:'Diverse, o.a. Fashioncheque, Intersolve.', price:'Giftcard kosten', on:false},
+ {cat:'DEBIT CARDS', key:'bancontact', name:P('Bancontact (+QR) (Belgi\u00eb)','Bancontact (+QR) (Belgium)'), price:'\u20ac 0,12', on:true},
+ {cat:'DEBIT CARDS', key:'postepay', name:P('Postepay (Itali\u00eb)','Postepay (Italy)'), price:poa, on:false},
+ {cat:'DEBIT CARDS', key:'dankort', name:P('Dankort (Denemarken)','Dankort (Denmark)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'ideal', name:P('iDEAL (+QR) (Nederland)','iDEAL (+QR) (Netherlands)'), price:'\u20ac 0,10', on:true},
+ {cat:'ONLINE BANKING', key:'belfius', name:P('Belfius (Belgi\u00eb)','Belfius (Belgium)'), price:'0,70 %', on:true},
+ {cat:'ONLINE BANKING', key:'kbc', name:P('KBC/CBC (Belgi\u00eb)','KBC/CBC (Belgium)'), price:'0,70 %', on:true},
+ {cat:'ONLINE BANKING', key:'eps', name:P('EPS (Oostenrijk)','EPS (Austria)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'mybank', name:P('MyBank (Itali\u00eb)','MyBank (Italy)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'przelewy24', name:P('Przelewy24 (Polen)','Przelewy24 (Poland)'), price:poa, on:true},
+ {cat:'ONLINE BANKING', key:'trustly', name:P('Trustly (Europa)','Trustly (Europe)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'trustpay', name:P('TrustPay (Tsjechi\u00eb)','TrustPay (Czech Republic)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'multibanco', name:'Multibanco (Portugal)', price:poa, on:false},
+ {cat:'BANKOVERBOEKING & SEPA INCASSO', key:'bankoverboeking', name:P('Bankoverboeking','Bank transfer'), price:'\u20ac 0,20', on:true},
+ {cat:'BANKOVERBOEKING & SEPA INCASSO', key:'sepadd', name:'SEPA Direct Debit', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'bno', name:P('MultiSafepay Betaal na Ontvangst (NL)','MultiSafepay Pay After Delivery (NL)'), price:poa, on:false},
+ {cat:'ACHTERAF BETALEN', key:'bit', name:P('MultiSafepay Betaal in Termijnen (NL)','MultiSafepay Pay in Instalments (NL)'), price:poa, on:false},
+ {cat:'ACHTERAF BETALEN', key:'billink', name:'Billink (NL, BE & DE)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'billink', name:'Billink B2B', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (NL, BE, DE, AT, CH)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (NL, BE, DE, AT, CH)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (NL, BE, DE, AT, CH)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'riverty', name:P('Riverty (NL, BE en DE)','Riverty (NL, BE and DE)'), price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'in3', name:'iDEAL in3 (NL)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'zinia', name:'Zinia by Santander (NL)', price:poa, on:false},
+ {cat:'WALLET', key:'paypal', name:'PayPal', price:P('PayPal kosten','PayPal fees'), on:true},
+ {cat:'WALLET', key:'applepay', name:'Apple Pay', price:P('Credit-/Debitcard kosten','Credit/debit card fees'), on:true},
+ {cat:'WALLET', key:'googlepay', name:'Google Pay', price:P('Credit-/Debitcard kosten','Credit/debit card fees'), on:true},
+ {cat:'WALLET', key:'amazonpay', name:'Amazon Pay', price:poa, on:false},
+ {cat:'WALLET', key:'mbway', name:'MB Way (Portugal)', price:poa, on:false},
+ {cat:'WALLET', key:'alipay', name:'Alipay', price:poa, on:false},
+ {cat:'WALLET', key:'wechatpay', name:'WeChat Pay', price:poa, on:false},
+ {cat:'GIFTCARDS', key:'giftcards', name:P('Diverse, o.a. Fashioncheque, Intersolve.','Various, incl. Fashioncheque, Intersolve.'), price:P('Giftcard kosten','Gift card fees'), on:false},
 ];}
 
-function defaultState(dt){
-  const today = new Date().toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+function posDefaults(lang){
+  const en=(lang||'nl')==='en';
+  const P=(nl,e)=>en?e:nl;
+  const na=en?'n/a':'n.v.t';
   return {
+      hw:[{name:'P2 Smartpad',def:'\u20ac 349,-',nieuw:false,on:true},{name:'P2 Lite SE',def:'\u20ac 299,-',nieuw:false,on:false},{name:'P3 H',def:'\u20ac 349,-',nieuw:true,on:false},{name:'P3 KH',def:'\u20ac 329,-',nieuw:true,on:false},{name:'P3 Air',def:'\u20ac 399,-',nieuw:true,on:true},{name:'P3 Mix + Docker',def:'\u20ac 749,-',nieuw:false,on:true}],
+      mo:[{name:'Service fee*',val:'\u20ac 6,95'},{name:P('Connection fee per actieve device per maand**','Connection fee per active device per month**'),val:'\u20ac 2,95'}],
+      ttp:[{name:P('Licentie fee per actieve Tap to Pay device per maand','Licence fee per active Tap to Pay device per month'),val:'\u20ac 9,95'},{name:P('Opslag per Tap to Pay transactie','Markup per Tap to Pay transaction'),val:'\u20ac 0,06'}],
+      dom:[{fl:'NL',name:P('Nederland (merchant in NL)','Netherlands (merchant in NL)'),val:na},{fl:'BE',name:P('Belgi\u00eb (merchant in BE)','Belgium (merchant in BE)'),val:na},{fl:'DE',name:P('Duitsland (merchant in DE)','Germany (merchant in DE)'),val:na}],
+      nondom:[{k:'visa',name:'Visa Debit',val:na},{k:'mastercard',name:'Mastercard Debit',val:na}],
+      credit:[{k:'visa',name:'Visa Credit',val:na},{k:'mastercard',name:'Mastercard Credit',val:na},{k:'amex',name:'American Express',val:na}]
+  };
+}
+
+function defaultState(dt, lang){
+  const lg = lang || curLang();
+  const en = lg==='en';
+  const today = new Date().toLocaleDateString(en?'en-GB':'nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+  return {
+    lang: lg,
     docType: dt||'merchant',
     fields:{
-      bedrijf:'[Bedrijfsnaam]', datum:today, geldig:'', periode:'24 maanden', auteur:'Lior Tacq',
+      bedrijf:en?'[Company name]':'[Bedrijfsnaam]', datum:today, geldig:'', periode:en?'24 months':'24 maanden', auteur:'Lior Tacq',
       txkosten:'€ 0,10', refund:'€ 0,19', payout:'€ 0,50', viban:'€ 0,02',
       retrieval:'€ 5,00', chargeback:'€ 25,00', reversal:'€ 1,00', moi:'€ 60,00',
       notes:''
     },
     pages:{cover:true, product:false, benefits:false, agreement:false, financieel:true, tabel:true, pos:['partner','pos'].includes(dt||'merchant'), sig:true, notes:false},
-    rows: (()=>{ const rs=baseRows(); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
-    pos: {
-      hw:[{name:'P2 Smartpad',def:'\u20ac 349,-',nieuw:false,on:true},{name:'P2 Lite SE',def:'\u20ac 299,-',nieuw:false,on:false},{name:'P3 H',def:'\u20ac 349,-',nieuw:true,on:false},{name:'P3 KH',def:'\u20ac 329,-',nieuw:true,on:false},{name:'P3 Air',def:'\u20ac 399,-',nieuw:true,on:true},{name:'P3 Mix + Docker',def:'\u20ac 749,-',nieuw:false,on:true}],
-      mo:[{name:'Service fee*',val:'\u20ac 6,95'},{name:'Connection fee per actieve device per maand**',val:'\u20ac 2,95'}],
-      ttp:[{name:'Licentie fee per actieve Tap to Pay device per maand',val:'\u20ac 9,95'},{name:'Opslag per Tap to Pay transactie',val:'\u20ac 0,06'}],
-      dom:[{fl:'NL',name:'Nederland (merchant in NL)',val:'n.v.t'},{fl:'BE',name:'Belgi\u00eb (merchant in BE)',val:'n.v.t'},{fl:'DE',name:'Duitsland (merchant in DE)',val:'n.v.t'}],
-      nondom:[{k:'visa',name:'Visa Debit',val:'n.v.t'},{k:'mastercard',name:'Mastercard Debit',val:'n.v.t'}],
-      credit:[{k:'visa',name:'Visa Credit',val:'n.v.t'},{k:'mastercard',name:'Mastercard Credit',val:'n.v.t'},{k:'amex',name:'American Express',val:'n.v.t'}]
-    },
+    rows: (()=>{ const rs=baseRows(lg); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
+    pos: posDefaults(lg),
     vergelijk: false,   // merchant: toon kolom met huidige tarieven
-    vergelijkLabel: 'Huidig tarief',
+    vergelijkLabel: en?'Current rate':'Huidig tarief',
     oud: {},            // row index -> huidig tarief
     poskorting: 0,
     qty: {},         // device index -> aantal (POS only)
@@ -396,16 +433,38 @@ let S = defaultState('merchant');
 
 /* ---------- copy blocks ---------- */
 const COPY = {
- coverTitle:{merchant:'Omnichannel betalingen van A tot Z', partner:'Partner overeenkomst'},
- coverSub1:{merchant:'Verhoog uw omzet met slimme, hoogwaardige betaaloplossingen', partner:'Maak gebruik van de beste betaaloplossingen'},
- coverSub2:{merchant:'Acquirer en processor van de bekende creditcards', partner:'Acquirer en processor voor alle bekende creditcards en Bancontact'},
- acqBody:{
-  merchant:'Wij beheren de gehele betaalstroom voor creditcards tussen consument en webwinkel. Het verwijderen van derde partijen zorgt voor een snellere service en uitbetaling. Mochten er marktbrede downtimes zijn, krijgen wij u sneller weer online.',
-  partner:'Wij beheren de gehele betaalstroom voor creditcards tussen consument en merchant. Het verwijderen van derde partijen zorgt voor een snellere service en uitbetaling. Mochten er marktbrede downtimes zijn, zijn uw klanten bij MultiSafepay sneller weer online.'
+ coverTitle:{
+  nl:{merchant:'Omnichannel betalingen van A tot Z', partner:'Partner overeenkomst'},
+  en:{merchant:'Omnichannel payments from A to Z', partner:'Partner agreement'}
  },
- finTitle:{merchant:'Financieel voorstel', partner:'Financieel voorstel (inkoop)'},
- footerLabel:{merchant:'Samenwerkingsvoorstel', partner:'Samenwerkingsvoorstel'}
+ coverSub1:{
+  nl:{merchant:'Verhoog uw omzet met slimme, hoogwaardige betaaloplossingen', partner:'Maak gebruik van de beste betaaloplossingen'},
+  en:{merchant:'Grow your revenue with smart, high-quality payment solutions', partner:'Take advantage of the best payment solutions'}
+ },
+ coverSub2:{
+  nl:{merchant:'Acquirer en processor van de bekende creditcards', partner:'Acquirer en processor voor alle bekende creditcards en Bancontact'},
+  en:{merchant:'Acquirer and processor of all major credit cards', partner:'Acquirer and processor for all major credit cards and Bancontact'}
+ },
+ acqBody:{
+  nl:{
+   merchant:'Wij beheren de gehele betaalstroom voor creditcards tussen consument en webwinkel. Het verwijderen van derde partijen zorgt voor een snellere service en uitbetaling. Mochten er marktbrede downtimes zijn, krijgen wij u sneller weer online.',
+   partner:'Wij beheren de gehele betaalstroom voor creditcards tussen consument en merchant. Het verwijderen van derde partijen zorgt voor een snellere service en uitbetaling. Mochten er marktbrede downtimes zijn, zijn uw klanten bij MultiSafepay sneller weer online.'
+  },
+  en:{
+   merchant:'We manage the entire credit card payment flow between the consumer and your webshop. Removing third parties means faster service and faster payouts. Should there be market-wide downtime, we get you back online sooner.',
+   partner:'We manage the entire credit card payment flow between the consumer and the merchant. Removing third parties means faster service and faster payouts. Should there be market-wide downtime, your clients are back online sooner with MultiSafepay.'
+  }
+ },
+ finTitle:{
+  nl:{merchant:'Financieel voorstel', partner:'Financieel voorstel (inkoop)'},
+  en:{merchant:'Financial proposal', partner:'Financial proposal (buy rates)'}
+ },
+ footerLabel:{
+  nl:{merchant:'Samenwerkingsvoorstel', partner:'Samenwerkingsvoorstel'},
+  en:{merchant:'Partnership proposal', partner:'Partnership proposal'}
+ }
 };
+function copyOf(key){ const c=COPY[key]; const lg=(S.lang==='en'&&c.en)?'en':'nl'; return c[lg][S.docType] || c['nl'][S.docType]; }
 
 /* ---------- render sidebar ---------- */
 function renderSidebar(){
@@ -420,7 +479,7 @@ function renderSidebar(){
   ${(isP||S.pages.pos)?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
   ${S.docType==='merchant'?`<h3>Vergelijking</h3>
     <label class="chk"><input type="checkbox" id="vglOn" ${S.vergelijk?'checked':''}> Kolom met huidige tarieven</label>
-    ${S.vergelijk?`<div class="fld" style="margin-top:6px"><label>Koptekst kolom</label><input id="vglLabel" value="${esc(S.vergelijkLabel||'Huidig tarief')}"></div>
+    ${S.vergelijk?`<div class="fld" style="margin-top:6px"><label>Koptekst kolom</label><input id="vglLabel" value="${esc(S.vergelijkLabel||L('Huidig tarief','Current rate'))}"></div>
     <div class="hint">Vul per betaalmethode het huidige tarief in door in de tabel op de streep te klikken.</div>`:''}`:''}
   <h3>Pagina's</h3>`;
   const pageDefs = S.docType==='pos'
@@ -496,7 +555,7 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 
 /* ---------- page templates ---------- */
 function logoBlock(){return `<div class="plogo">${MARK}<span class="wm"><span class="lt">Multi</span>Safepay</span></div>`}
-function foot(){return `<div class="pfoot"><span contenteditable data-copy="footer">${COPY.footerLabel[S.docType]}</span><span class="pn"></span></div>`}
+function foot(){return `<div class="pfoot"><span contenteditable data-copy="footer">${copyOf('footerLabel')}</span><span class="pn"></span></div>`}
 
 function pgCover(){
   const isP=S.docType==='partner', F=S.fields;
@@ -506,17 +565,17 @@ function pgCover(){
       <img class="hero" src="${isP?A.hero_partner:A.hero_merchant}">
     </div>
     <div class="title">
-      <h1 contenteditable data-copy="coverTitle">${COPY.coverTitle[S.docType]}</h1>
-      <p contenteditable data-copy="coverSub1">${COPY.coverSub1[S.docType]}</p>
-      <p contenteditable data-copy="coverSub2">${COPY.coverSub2[S.docType]}</p>
+      <h1 contenteditable data-copy="coverTitle">${copyOf('coverTitle')}</h1>
+      <p contenteditable data-copy="coverSub1">${copyOf('coverSub1')}</p>
+      <p contenteditable data-copy="coverSub2">${copyOf('coverSub2')}</p>
     </div>
     <div class="meta">
-      <div><div class="lbl">Persoonlijk voorstel voor:</div><div class="val big" data-bind="bedrijf">${esc(F.bedrijf)}</div>
-        ${isP?`<div class="lbl" style="margin-top:5mm">Gemaakt door:</div><div class="val" data-bind="auteur">${esc(F.auteur)}</div>`:''}</div>
+      <div><div class="lbl">${L('Persoonlijk voorstel voor:','Personal proposal for:')}</div><div class="val big" data-bind="bedrijf">${esc(F.bedrijf)}</div>
+        ${isP?`<div class="lbl" style="margin-top:5mm">${L('Gemaakt door:','Created by:')}</div><div class="val" data-bind="auteur">${esc(F.auteur)}</div>`:''}</div>
       <div>
-        <div class="lbl">Datum voorstel:</div><div class="val" data-bind="datum">${esc(F.datum)}</div>
-        ${!isP&&F.geldig?`<div class="lbl" style="margin-top:4mm">Voorstel geldig tot:</div><div class="val" data-bind="geldig">${esc(F.geldig)}</div>`:''}
-        <div class="lbl" style="margin-top:4mm">Contractperiode:</div><div class="val" data-bind="periode">${esc(F.periode)}</div>
+        <div class="lbl">${L('Datum voorstel:','Proposal date:')}</div><div class="val" data-bind="datum">${esc(F.datum)}</div>
+        ${!isP&&F.geldig?`<div class="lbl" style="margin-top:4mm">${L('Voorstel geldig tot:','Proposal valid until:')}</div><div class="val" data-bind="geldig">${esc(F.geldig)}</div>`:''}
+        <div class="lbl" style="margin-top:4mm">${L('Contractperiode:','Contract term:')}</div><div class="val" data-bind="periode">${esc(F.periode)}</div>
       </div>
     </div>
   </div>`;
@@ -525,23 +584,23 @@ function pgCover(){
 function pgProduct(){
   return `<div class="page"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec">Acquirer &amp; processor</h2>
-    <p class="lead" contenteditable data-copy="acqBody">${COPY.acqBody[S.docType]}</p>
+    <h2 class="sec">${L('Acquirer &amp; processor','Acquirer &amp; processor')}</h2>
+    <p class="lead" contenteditable data-copy="acqBody">${copyOf('acqBody')}</p>
     <div class="threecol">
-      <div contenteditable><h4>Geen derde partijen</h4><p>Hogere beschikbaarheid; minder schakels, meer controle.</p></div>
-      <div contenteditable><h4>Snellere uitbetaling</h4><p>Voorkom vertragingen en tijdsverspilling met snelle uitkering in meerdere valuta's.</p></div>
-      <div contenteditable><h4>Betere conversie</h4><p>Hogere betalingsacceptatie voor lokale en internationale betalingen.</p></div>
+      <div contenteditable><h4>${L('Geen derde partijen','No third parties')}</h4><p>${L('Hogere beschikbaarheid; minder schakels, meer controle.','Higher availability; fewer links in the chain, more control.')}</p></div>
+      <div contenteditable><h4>${L('Snellere uitbetaling','Faster payouts')}</h4><p>${L("Voorkom vertragingen en tijdsverspilling met snelle uitkering in meerdere valuta's.",'Avoid delays and wasted time with fast payouts in multiple currencies.')}</p></div>
+      <div contenteditable><h4>${L('Betere conversie','Better conversion')}</h4><p>${L('Hogere betalingsacceptatie voor lokale en internationale betalingen.','Higher acceptance rates for local and international payments.')}</p></div>
     </div>
     <div class="hr"></div>
-    <h2 class="sec center">Integreer en verwerk betalingen op uw manier</h2>
-    <p class="lead" style="text-align:center;margin:0 auto 4mm" contenteditable>Met intern ontwikkelde oplossingen, toegewijde developers en een gespecialiseerd integratieteam profiteert u altijd van de laatste ontwikkelingen.</p>
+    <h2 class="sec center">${L('Integreer en verwerk betalingen op uw manier','Integrate and process payments your way')}</h2>
+    <p class="lead" style="text-align:center;margin:0 auto 4mm" contenteditable>${L('Met intern ontwikkelde oplossingen, toegewijde developers en een gespecialiseerd integratieteam profiteert u altijd van de laatste ontwikkelingen.','With in-house developed solutions, dedicated developers and a specialised integration team, you always benefit from the latest developments.')}</p>
     <div class="threecol">
-      <div contenteditable><h4>API</h4><p>Onze krachtige, flexibele integratie. Perfect voor een integratie op maat.</p></div>
-      <div contenteditable><h4>Kant-en-klare plugins &amp; apps</h4><p>In-house ontwikkelde integraties voor alle ecommerce platformen, uitgerust met de nieuwste features.</p></div>
-      <div contenteditable><h4>SDK</h4><p>Vereenvoudig het werken met onze API via onze SDK, volledig geïntegreerd binnen uw app.</p></div>
-      <div contenteditable><h4>Embedded</h4><p>Integreer betaalmethoden in uw checkout en gebruik onze smart payment components voor de perfecte betaalervaring.</p></div>
-      <div contenteditable><h4>Hosted</h4><p>Verwerk snel en gemakkelijk betalingen via onze hosted betaalpagina's. Veilig, snel en boordevol innovatieve functies.</p></div>
-      <div contenteditable><h4>Betaallinks</h4><p>Flexibel, snel en eenvoudig. Genereer en verstuur betaallinks via bijvoorbeeld papieren facturen (QR) of e-mail/sms.</p></div>
+      <div contenteditable><h4>API</h4><p>${L('Onze krachtige, flexibele integratie. Perfect voor een integratie op maat.','Our powerful, flexible integration. Perfect for a tailor-made setup.')}</p></div>
+      <div contenteditable><h4>${L('Kant-en-klare plugins &amp; apps','Ready-made plugins &amp; apps')}</h4><p>${L('In-house ontwikkelde integraties voor alle ecommerce platformen, uitgerust met de nieuwste features.','In-house developed integrations for all ecommerce platforms, equipped with the latest features.')}</p></div>
+      <div contenteditable><h4>SDK</h4><p>${L('Vereenvoudig het werken met onze API via onze SDK, volledig geïntegreerd binnen uw app.','Simplify working with our API through our SDK, fully integrated within your app.')}</p></div>
+      <div contenteditable><h4>Embedded</h4><p>${L('Integreer betaalmethoden in uw checkout en gebruik onze smart payment components voor de perfecte betaalervaring.','Integrate payment methods into your checkout and use our smart payment components for the perfect payment experience.')}</p></div>
+      <div contenteditable><h4>Hosted</h4><p>${L("Verwerk snel en gemakkelijk betalingen via onze hosted betaalpagina's. Veilig, snel en boordevol innovatieve functies.",'Process payments quickly and easily through our hosted payment pages. Secure, fast and packed with innovative features.')}</p></div>
+      <div contenteditable><h4>${L('Betaallinks','Payment links')}</h4><p>${L('Flexibel, snel en eenvoudig. Genereer en verstuur betaallinks via bijvoorbeeld papieren facturen (QR) of e-mail/sms.','Flexible, fast and simple. Generate and send payment links via paper invoices (QR) or email/SMS, for example.')}</p></div>
     </div>
     ${foot()}
   </div></div>`;
@@ -551,19 +610,19 @@ function pgBenefits(){
   const isP=S.docType==='partner';
   return `<div class="page"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec">Verbeter uw business met MultiSafepay</h2>
+    <h2 class="sec">${L('Verbeter uw business met MultiSafepay','Improve your business with MultiSafepay')}</h2>
     <div class="twocol">
-      <div class="benefit" contenteditable><h4>Optimaliseer uw conversie</h4><div class="tag">Lever een frictieloze betaalervaring</div><ul>
-        <li>Win verloren omzet terug met Second Chance e-mails</li><li>Integreer betaalmethoden direct in ${isP?'de checkout van uw klanten':'uw checkout'}</li><li>Onthoud en versleutel data voor razendsnelle herhaalaankopen</li><li>Optimaliseer de betaalervaring voor mobile devices</li></ul></div>
-      <div class="benefit" contenteditable><h4>Verkoop internationaal</h4><div class="tag">Breid gemakkelijk uit naar het buitenland</div><ul>
-        <li>Bied de juiste betaalmethoden voor de juiste markt aan</li><li>Accepteer en verwerk tot wel 12 valuta</li><li>Toon betaalpagina's in de juiste taal</li></ul></div>
-      <div class="benefit" contenteditable><h4>Stroomlijn facturatie en boekhouding</h4><div class="tag">Houd de administratie overzichtelijk</div><ul>
-        <li>Creëer een eigen B2B-facturatieprocedure — zonder kennis van coderen</li><li>Beheer orders tot in de puntjes: splits betalingen en verstuur betaallinks op maat</li><li>Synchroniseer met onze partners en automatiseer de boekhouding</li></ul></div>
-      <div class="benefit" contenteditable><h4>Boost creditcardbetalingen</h4><div class="tag">Vereenvoudig het betaalproces voor kaarten</div><ul>
-        <li>Geniet van een snellere, versimpelde end-to-end betaalstroom</li><li>Verifieer en authentiseer betaalgegevens direct in de checkout</li><li>Geef dynamisch velden en benodigde informatie weer</li></ul></div>
+      <div class="benefit" contenteditable><h4>${L('Optimaliseer uw conversie','Optimise your conversion')}</h4><div class="tag">${L('Lever een frictieloze betaalervaring','Deliver a frictionless payment experience')}</div><ul>
+        <li>${L('Win verloren omzet terug met Second Chance e-mails','Win back lost revenue with Second Chance emails')}</li><li>${L('Integreer betaalmethoden direct in '+(isP?'de checkout van uw klanten':'uw checkout'),'Integrate payment methods directly into '+(isP?"your clients' checkout":'your checkout'))}</li><li>${L('Onthoud en versleutel data voor razendsnelle herhaalaankopen','Store and encrypt data for lightning-fast repeat purchases')}</li><li>${L('Optimaliseer de betaalervaring voor mobile devices','Optimise the payment experience for mobile devices')}</li></ul></div>
+      <div class="benefit" contenteditable><h4>${L('Verkoop internationaal','Sell internationally')}</h4><div class="tag">${L('Breid gemakkelijk uit naar het buitenland','Expand abroad with ease')}</div><ul>
+        <li>${L('Bied de juiste betaalmethoden voor de juiste markt aan','Offer the right payment methods for the right market')}</li><li>${L('Accepteer en verwerk tot wel 12 valuta','Accept and process up to 12 currencies')}</li><li>${L("Toon betaalpagina's in de juiste taal",'Show payment pages in the right language')}</li></ul></div>
+      <div class="benefit" contenteditable><h4>${L('Stroomlijn facturatie en boekhouding','Streamline invoicing and accounting')}</h4><div class="tag">${L('Houd de administratie overzichtelijk','Keep your administration clear')}</div><ul>
+        <li>${L('Creëer een eigen B2B-facturatieprocedure — zonder kennis van coderen','Create your own B2B invoicing process — no coding required')}</li><li>${L('Beheer orders tot in de puntjes: splits betalingen en verstuur betaallinks op maat','Manage orders down to the detail: split payments and send tailored payment links')}</li><li>${L('Synchroniseer met onze partners en automatiseer de boekhouding','Sync with our partners and automate your bookkeeping')}</li></ul></div>
+      <div class="benefit" contenteditable><h4>${L('Boost creditcardbetalingen','Boost credit card payments')}</h4><div class="tag">${L('Vereenvoudig het betaalproces voor kaarten','Simplify the card payment process')}</div><ul>
+        <li>${L('Geniet van een snellere, versimpelde end-to-end betaalstroom','Enjoy a faster, simplified end-to-end payment flow')}</li><li>${L('Verifieer en authentiseer betaalgegevens direct in de checkout','Verify and authenticate payment details directly in the checkout')}</li><li>${L('Geef dynamisch velden en benodigde informatie weer','Display fields and required information dynamically')}</li></ul></div>
     </div>
     <div class="hr"></div>
-    <p class="lead" style="text-align:center;margin:0 auto" contenteditable>Meer dan 18.000 Europese bedrijven maken al gebruik van onze uitgebreide toolkit om hun bedrijfsprocessen te optimaliseren.</p>
+    <p class="lead" style="text-align:center;margin:0 auto" contenteditable>${L('Meer dan 18.000 Europese bedrijven maken al gebruik van onze uitgebreide toolkit om hun bedrijfsprocessen te optimaliseren.','More than 18,000 European businesses already use our extensive toolkit to optimise their business processes.')}</p>
     ${foot()}
   </div></div>`;
 }
@@ -641,6 +700,7 @@ function pgAgreement(){
   return `<div class="page legal"><div class="pad">
     ${logoBlock()}
     <h2 contenteditable>${isP?'Samenwerkingsvoorstel':'Samenwerkingsovereenkomst'}</h2>
+    ${curLang()==='en'?`<p style="font-size:7.6pt;line-height:1.5;color:#5A6B76;margin-bottom:2mm" contenteditable>The agreement below is provided in Dutch; the Dutch text is the legally binding version.</p>`:''}
     ${isP?'':`<p style="font-size:7.6pt;line-height:1.5;color:#26313A;margin-bottom:3mm" contenteditable>Partijen bij deze Samenwerkingsovereenkomst zijn <b data-bind="bedrijf">${esc(S.fields.bedrijf)}</b> ("Merchant") en MultiSafepay B.V. Deze Samenwerkingsovereenkomst richt zich op de levering van de in deze Overeenkomst en in de Algemene Voorwaarden MultiSafepay gespecificeerde diensten ("Diensten") van MultiSafepay aan Merchant.</p>`}
     <div class="legalbody" contenteditable>${isP?LEGAL_PARTNER:LEGAL_MERCHANT}</div>
     ${foot()}
@@ -654,25 +714,25 @@ function pgFinancieel(){
   const isP=S.docType==='partner';
   return `<div class="page"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec" contenteditable>${COPY.finTitle[S.docType]}</h2>
-    <p class="lead" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (€) en zijn exclusief BTW. Tarieven uitgedrukt in een percentage (%) worden berekend over het totale transactiebedrag. Alle genoemde tarieven zijn onder voorbehoud van acceptatie, wijzigingen en fouten.</p>
+    <h2 class="sec" contenteditable>${copyOf('finTitle')}</h2>
+    <p class="lead" contenteditable>${L('Tarieven in dit voorstel worden vermeld in Euro (€) en zijn exclusief BTW. Tarieven uitgedrukt in een percentage (%) worden berekend over het totale transactiebedrag. Alle genoemde tarieven zijn onder voorbehoud van acceptatie, wijzigingen en fouten.','Rates in this proposal are stated in Euro (€) and exclude VAT. Rates expressed as a percentage (%) are calculated on the total transaction amount. All rates are subject to acceptance, changes and errors.')}</p>
     <div class="finwrap">
       <div>
-        <div class="cyansub">Tarieven</div>
-        ${feeItem('Transactiekosten','txkosten','Deze kosten rekenen wij voor elke online transactie. Dit tarief is reeds verwerkt in de vermelde tarieven per betaalmethode.')}
-        ${feeItem('Refund','refund','Deze kosten rekenen wij voor elke refund (creditering) die gedaan wordt.')}
-        ${feeItem('Uitbetalen (per batch)','payout','Deze kosten rekenen wij voor elke uitbetaling van het saldo. U kunt zelf aangeven hoe vaak en op welke dagen u automatisch uitbetaald wenst te worden.')}
-        ${feeItem('VIBAN Solution','viban','Deze kosten rekenen wij voor elke VIBAN-transactie. Dit wordt standaard opgeteld bij de bestaande kosten (SEPA Direct Debit, Bank transfer, Refunds).')}
+        <div class="cyansub">${L('Tarieven','Rates')}</div>
+        ${feeItem(L('Transactiekosten','Transaction fee'),'txkosten',L('Deze kosten rekenen wij voor elke online transactie. Dit tarief is reeds verwerkt in de vermelde tarieven per betaalmethode.','We charge this fee for every online transaction. It is already included in the rates listed per payment method.'))}
+        ${feeItem('Refund','refund',L('Deze kosten rekenen wij voor elke refund (creditering) die gedaan wordt.','We charge this fee for every refund (credit) that is processed.'))}
+        ${feeItem(L('Uitbetalen (per batch)','Payout (per batch)'),'payout',L('Deze kosten rekenen wij voor elke uitbetaling van het saldo. U kunt zelf aangeven hoe vaak en op welke dagen u automatisch uitbetaald wenst te worden.','We charge this fee for every payout of your balance. You decide how often and on which days you want to be paid out automatically.'))}
+        ${feeItem('VIBAN Solution','viban',L('Deze kosten rekenen wij voor elke VIBAN-transactie. Dit wordt standaard opgeteld bij de bestaande kosten (SEPA Direct Debit, Bank transfer, Refunds).','We charge this fee for every VIBAN transaction. It is added by default to the existing fees (SEPA Direct Debit, Bank transfer, Refunds).'))}
       </div>
       <div>
-        <div class="cyansub">Incidentele kosten</div>
-        ${feeItem('Retrieval creditcard','retrieval','Deze kosten rekenen wij op het moment dat de consument vragen stelt aan de creditcardmaatschappij over één van uw transacties. Een duidelijke transactieomschrijving voorkomt dit vrijwel volledig.')}
-        ${feeItem('Chargeback creditcard','chargeback','Deze kosten rekenen wij wanneer een consument geld terugvordert via de creditcardmaatschappij. Wij onderzoeken elke chargeback en vechten deze waar mogelijk aan.')}
-        ${feeItem('Reversal SEPA Direct Debit','reversal','Deze kosten rekenen wij bij stornering van een automatische incasso tot 8 weken na de transactiedatum.')}
-        ${feeItem('MOI Dossiertarief SEPA DD','moi','Deze kosten rekenen wij bij stornering van een automatische incasso vanaf 8 weken na de transactiedatum.')}
+        <div class="cyansub">${L('Incidentele kosten','Incidental costs')}</div>
+        ${feeItem(L('Retrieval creditcard','Credit card retrieval'),'retrieval',L('Deze kosten rekenen wij op het moment dat de consument vragen stelt aan de creditcardmaatschappij over één van uw transacties. Een duidelijke transactieomschrijving voorkomt dit vrijwel volledig.','We charge this fee when a consumer asks the credit card company questions about one of your transactions. A clear transaction description prevents this almost entirely.'))}
+        ${feeItem(L('Chargeback creditcard','Credit card chargeback'),'chargeback',L('Deze kosten rekenen wij wanneer een consument geld terugvordert via de creditcardmaatschappij. Wij onderzoeken elke chargeback en vechten deze waar mogelijk aan.','We charge this fee when a consumer reclaims money through the credit card company. We investigate every chargeback and dispute it where possible.'))}
+        ${feeItem('Reversal SEPA Direct Debit','reversal',L('Deze kosten rekenen wij bij stornering van een automatische incasso tot 8 weken na de transactiedatum.','We charge this fee when a direct debit is reversed up to 8 weeks after the transaction date.'))}
+        ${feeItem(L('MOI Dossiertarief SEPA DD','MOI case fee SEPA DD'),'moi',L('Deze kosten rekenen wij bij stornering van een automatische incasso vanaf 8 weken na de transactiedatum.','We charge this fee when a direct debit is reversed more than 8 weeks after the transaction date.'))}
       </div>
     </div>
-    ${S.pages.notes?`<div class="notes"><h4 contenteditable>Aanvullende afspraken</h4><div contenteditable data-notes>${esc(S.fields.notes).replace(/\n/g,'<br>')}</div></div>`:''}
+    ${S.pages.notes?`<div class="notes"><h4 contenteditable>${L('Aanvullende afspraken','Additional arrangements')}</h4><div contenteditable data-notes>${esc(S.fields.notes).replace(/\n/g,'<br>')}</div></div>`:''}
     ${foot()}
   </div></div>`;
 }
@@ -690,13 +750,13 @@ function pgTabel(){
   const cmp = S.docType==='merchant' && S.vergelijk;
   const cols = cmp?4:3;
   const theadHtml=`<thead class="thead"><tr><td></td><td></td>`+
-    (cmp?`<td class="oldh" contenteditable data-cmplabel>${esc(S.vergelijkLabel||'Huidig tarief')}</td>`:'')+
-    `<td>${isP?'INKOOPTARIEF PER<br>BETAALMETHODE':'TARIEF PER<br>BETAALMETHODE'}</td></tr></thead>`;
+    (cmp?`<td class="oldh" contenteditable data-cmplabel>${esc(S.vergelijkLabel||L('Huidig tarief','Current rate'))}</td>`:'')+
+    `<td>${L(isP?'INKOOPTARIEF PER<br>BETAALMETHODE':'TARIEF PER<br>BETAALMETHODE', isP?'BUY RATE PER<br>PAYMENT METHOD':'RATE PER<br>PAYMENT METHOD')}</td></tr></thead>`;
   let bodies='';
   for(const g of cats){
-    let b=`<tr class="cat"><td colspan="${cols}">${g.cat}</td></tr>`;
+    let b=`<tr class="cat"><td colspan="${cols}">${catLabel(g.cat)}</td></tr>`;
     for(const r of g.rows){
-      const i=S.rows.indexOf(r), poa=/aanvraag/i.test(r.price);
+      const i=S.rows.indexOf(r), poa=RX_POA.test(r.price);
       const oud=(S.oud||{})[i]||'';
       b+=`<tr class="m"><td class="ic"><img src="${A[r.key]||''}" onerror="this.style.display='none'"></td><td class="nm" contenteditable>${esc(r.name)}</td>`+
          (cmp?`<td class="pr old${oud?'':' poa'}" contenteditable data-oud="${i}">${esc(oud||'\u2014')}</td>`:'')+
@@ -706,10 +766,10 @@ function pgTabel(){
   }
   return `<div class="page tabelpage"><div class="pad">
     ${logoBlock()}
-    ${isP?`<h2 class="sec" contenteditable>Tarief overzicht ECOM transacties</h2>
-    <p class="lead" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.</p>`:''}
+    ${isP?`<h2 class="sec" contenteditable>${L('Tarief overzicht ECOM transacties','Rate overview ECOM transactions')}</h2>
+    <p class="lead" contenteditable>${L('Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.','Rates in this proposal are stated in Euro (\u20ac) and exclude VAT. The products and services below are made available by MultiSafepay to the partner to offer to its affiliates.')}</p>`:''}
     <table class="ptable">${theadHtml}${bodies}</table>
-    <div class="smallnote" contenteditable>Indien het huidig aantal transacties en de daarbij behorende transactiewaarde aanzienlijk onder het geschatte gemiddelde ligt, of indien meer dan 10% van het totaal van de transacties afkomstig is van buiten de EU en/of via Business/Company creditcards verwerkt wordt, dan behoudt MultiSafepay zich het recht voor om deze kosten aan te passen.</div>
+    <div class="smallnote" contenteditable>${L('Indien het huidig aantal transacties en de daarbij behorende transactiewaarde aanzienlijk onder het geschatte gemiddelde ligt, of indien meer dan 10% van het totaal van de transacties afkomstig is van buiten de EU en/of via Business/Company creditcards verwerkt wordt, dan behoudt MultiSafepay zich het recht voor om deze kosten aan te passen.','If the current number of transactions and the related transaction value are significantly below the estimated average, or if more than 10% of all transactions originate from outside the EU and/or are processed via business/company credit cards, MultiSafepay reserves the right to adjust these fees.')}</div>
     ${foot()}
   </div></div>`;
 }
@@ -793,7 +853,7 @@ function posSync(path, val){
       if((r.k==='visa'||r.k==='mastercard') && !(list===from && j===i)){
         r.val=val;
         const oEl=document.querySelector(`#preview [data-pos="${list}.${j}.val"]`);
-        if(oEl && oEl!==document.activeElement){ oEl.textContent=val; oEl.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(val)); }
+        if(oEl && oEl!==document.activeElement){ oEl.textContent=val; oEl.classList.toggle('poa', RX_PH.test(val)); }
       }
     });
   });
@@ -813,7 +873,7 @@ function posTotals(){
   return {units, one};
 }
 function money(v){ return '\u20ac '+v.toFixed(2).replace('.',','); }
-function posGray(v){ return /n\.v\.t|aanvraag/i.test(v||'')?' poa':''; }
+function posGray(v){ return RX_PH.test(v||'')?' poa':''; }
 function posHead(label, h1, h2){
   return `<tr class="phead"><td colspan="2" contenteditable>${label}</td><td class="vh" contenteditable>${h1||''}</td><td class="vh" contenteditable>${h2||''}</td></tr>`;
 }
@@ -838,21 +898,21 @@ function pgPosOnly(){
   });
   return `<div class="page pospage"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>Offerte POS hardware</h2>
-    <p class="lead" style="margin-bottom:3mm" contenteditable>Tarieven in deze offerte worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan ${bedrijf}.</p>
+    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>${L('Offerte POS hardware','POS hardware quotation')}</h2>
+    <p class="lead" style="margin-bottom:3mm" contenteditable>${L('Tarieven in deze offerte worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan '+bedrijf+'.','Rates in this quotation are stated in Euro (\u20ac) and exclude VAT. The products and services below are made available by MultiSafepay to '+bedrijf+'.')}</p>
     <h3 class="posh" style="margin-top:0" contenteditable>POS Hardware</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('HARDWARE','Aantal','Tarief '+bedrijf)}
+      ${posHead('HARDWARE',L('Aantal','Quantity'),L('Tarief ','Rate ')+bedrijf)}
       ${hw}
-      <tr class="tot"><td colspan="2"></td><td class="pr2 lbl">Totaal eenmalig</td><td class="pr2 val">${money(TOT.one)}</td></tr>
+      <tr class="tot"><td colspan="2"></td><td class="pr2 lbl">${L('Totaal eenmalig','Total one-off')}</td><td class="pr2 val">${money(TOT.one)}</td></tr>
     </tbody></table>
-    ${k>0?`<div class="posnote" style="color:#4A555E" contenteditable>Alle hardwaretarieven zijn inclusief ${String(k).replace('.',',')}% korting op het defaulttarief.</div>`:''}
-    <h3 class="posh" contenteditable>Maandelijkse kosten</h3>
+    ${k>0?`<div class="posnote" style="color:#4A555E" contenteditable>${L('Alle hardwaretarieven zijn inclusief '+String(k).replace('.',',')+'% korting op het defaulttarief.','All hardware rates include a '+String(k).replace('.',',')+'% discount on the default rate.')}</div>`:''}
+    <h3 class="posh" contenteditable>${L('Maandelijkse kosten','Monthly costs')}</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('MAANDELIJKS','','Tarief per terminal')}
+      ${posHead(L('MAANDELIJKS','MONTHLY'),'',L('Tarief per terminal','Rate per terminal'))}
       ${mo}
     </tbody></table>
-    <div class="posnote" contenteditable>* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.</div>
+    <div class="posnote" contenteditable>${L('* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.','* Only applicable to SmartPOS devices<br>** Applicable to both SmartPOS and CTAP devices. The connection fee is only charged when a terminal is linked to a MultiSafepay account, not for an inactive fleet.')}</div>
     ${foot()}
   </div></div>`;
 }
@@ -883,34 +943,34 @@ function pgPos(){
   const bedrijf=esc(S.fields.bedrijf||'');
   return `<div class="page pospage"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>Tarief overzicht POS transacties</h2>
-    <p class="lead" style="margin-bottom:3mm" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.</p>
+    <h2 class="sec" style="margin-bottom:2.5mm" contenteditable>${L('Tarief overzicht POS transacties','Rate overview POS transactions')}</h2>
+    <p class="lead" style="margin-bottom:3mm" contenteditable>${L('Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.','Rates in this proposal are stated in Euro (\u20ac) and exclude VAT. The products and services below are made available by MultiSafepay to the partner to offer to its affiliates.')}</p>
     <h3 class="posh" style="margin-top:0" contenteditable>POS Hardware</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('HARDWARE','Tarief default','Tarief '+bedrijf)}
+      ${posHead('HARDWARE',L('Tarief default','Default rate'),L('Tarief ','Rate ')+bedrijf)}
       ${hw}
     </tbody></table>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('MAANDELIJKS','','Tarief')}
+      ${posHead(L('MAANDELIJKS','MONTHLY'),'',L('Tarief','Rate'))}
       ${mo}
     </tbody></table>
-    <div class="posnote" contenteditable>* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.</div>
+    <div class="posnote" contenteditable>${L('* Enkel van toepassing op SmartPOS devices<br>** Zowel van toepassing op SmartPOS als CTAP devices. Connection fee zal enkel in rekening worden gebracht wanneer een terminal is gebonden aan een MultiSafepay account en niet voor inactieve vloot.','* Only applicable to SmartPOS devices<br>** Applicable to both SmartPOS and CTAP devices. The connection fee is only charged when a terminal is linked to a MultiSafepay account, not for an inactive fleet.')}</div>
     <h3 class="posh" contenteditable>Tap to Pay / SoftPOS</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('FEE COMPONENT','','Tarief')}
+      ${posHead('FEE COMPONENT','',L('Tarief','Rate'))}
       ${ttp}
     </tbody></table>
     <h3 class="posh" contenteditable>POS payments</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('DEBIT CARDS DOMESTIC (Maestro, VPAY, VISA, Mastercard)','','Tarief')}
+      ${posHead('DEBIT CARDS DOMESTIC (Maestro, VPAY, VISA, Mastercard)','',L('Tarief','Rate'))}
       ${payRows(P.dom,'dom','flag')}
     </tbody></table>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('DEBIT CARDS NON-DOMESTIC (EEA)','','Tarief')}
+      ${posHead('DEBIT CARDS NON-DOMESTIC (EEA)','',L('Tarief','Rate'))}
       ${payRows(P.nondom,'nondom','card')}
     </tbody></table>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('CREDIT CARDS','','Tarief')}
+      ${posHead('CREDIT CARDS','',L('Tarief','Rate'))}
       ${payRows(P.credit,'credit','card')}
     </tbody></table>
     ${foot()}
@@ -921,13 +981,13 @@ function pgSig(){
   const isP=S.docType==='partner';
   return `<div class="page sig"><div class="pad">
     ${logoBlock()}
-    <p style="font-size:9pt;margin-bottom:2mm" contenteditable>Aldus overeengekomen, opgemaakt en ondertekend te Amsterdam:</p>
-    <p style="font-size:9.5pt;font-weight:600">Namens MultiSafepay</p>
+    <p style="font-size:9pt;margin-bottom:2mm" contenteditable>${L('Aldus overeengekomen, opgemaakt en ondertekend te Amsterdam:','Agreed, drawn up and signed in Amsterdam:')}</p>
+    <p style="font-size:9.5pt;font-weight:600">${L('Namens MultiSafepay','On behalf of MultiSafepay')}</p>
     <div class="sigrow">
       <div class="who"><b>MultiSafepay</b><span>Olaf Wouter Geurs</span></div>
-      <div class="who"><b>Stichting derdengelden</b><span>Niels Alexander Geurs</span></div>
+      <div class="who"><b>${L('Stichting derdengelden','Stichting derdengelden (client funds foundation)')}</b><span>Niels Alexander Geurs</span></div>
     </div>
-    <h3 class="gd">Gegevens ${isP?'partner':'merchant'}</h3>
+    <h3 class="gd">${L('Gegevens '+(isP?'partner':'merchant'),(isP?'Partner':'Merchant')+' details')}</h3>
     <div class="sigfields">
       ${sigFieldDefs(isP).map(f=>{
         if(f.sub) return `<div class="sigsub">${f.sub}</div>`;
@@ -973,7 +1033,7 @@ function renderPreview(){
     if(last && last.getBoundingClientRect().bottom>limit) pg.classList.add('xtight');
   });
   // page numbers
-  pv.querySelectorAll('.page').forEach((p,i)=>{ const pn=p.querySelector('.pn'); if(pn) pn.textContent='Paginanummer: '+(i+1); });
+  pv.querySelectorAll('.page').forEach((p,i)=>{ const pn=p.querySelector('.pn'); if(pn) pn.textContent=L('Paginanummer: ','Page: ')+(i+1); });
   // bindings: price edits (Mastercard <-> Visa <-> Maestro stay identical)
   const SYNC=['mastercard','visa','maestro'];
   function syncCard(el, valOverride){
@@ -984,7 +1044,7 @@ function renderPreview(){
       if(xi!==i && SYNC.includes(x.key)){
         x.price=val;
         const oEl=pv.querySelector(`[data-price="${xi}"]`);
-        if(oEl && oEl!==el && oEl!==document.activeElement){ oEl.textContent=composePrice(val); oEl.classList.toggle('poa',/aanvraag/i.test(val)); }
+        if(oEl && oEl!==el && oEl!==document.activeElement){ oEl.textContent=composePrice(val); oEl.classList.toggle('poa',RX_POA.test(val)); }
       }
     });
   }
@@ -999,18 +1059,18 @@ function renderPreview(){
     });
   });
   pv.querySelectorAll('[data-cmplabel]').forEach(el=>el.addEventListener('blur',()=>{
-    S.vergelijkLabel=el.textContent.trim()||'Huidig tarief'; renderSidebar();
+    S.vergelijkLabel=el.textContent.trim()||L('Huidig tarief','Current rate'); renderSidebar();
   }));
   pv.querySelectorAll('[data-price]').forEach(el=>{
     el.addEventListener('focus',()=>{ const i=+el.dataset.price; const raw=S.rows[i].price;
-      el.textContent=/aanvraag/i.test(raw)?'':raw; });
+      el.textContent=RX_POA.test(raw)?'':raw; });
     el.addEventListener('blur',()=>{ const i=+el.dataset.price;
-      let v=el.textContent.trim(); if(v==='') v='Prijs op aanvraag';
+      let v=el.textContent.trim(); if(v==='') v=POA();
       else v=v.split('+').map(p=>{ p=p.trim(); return (/^\d/.test(p) && !/%/.test(p) && !/^€/.test(p)) ? '€ '+p : p; }).join(' + ');
       S.rows[i].price=v;
-      el.classList.toggle('poa', /aanvraag/i.test(v)); syncCard(el, v);
+      el.classList.toggle('poa', RX_POA.test(v)); syncCard(el, v);
       const rr=S.rows[i]; el.textContent=(rr.key==='applepay'||rr.key==='googlepay')?rr.price:composePrice(rr.price); });
-    el.addEventListener('input',()=>{ el.classList.toggle('poa', /aanvraag/i.test(el.textContent)); syncCard(el); });
+    el.addEventListener('input',()=>{ el.classList.toggle('poa', RX_POA.test(el.textContent)); syncCard(el); });
   });
   // POS cell bindings (persist edits across re-renders)
   function setPosPath(path, val){
@@ -1019,15 +1079,15 @@ function renderPreview(){
     for(let i=0;i<parts.length-1;i++) o=o[parts[i]];
     o[parts[parts.length-1]]=val;
   }
-  const PH=/^(n\.v\.t\.?|prijs op aanvraag)$/i;
+  const PH=/^(n\.v\.t\.?|n\/a|prijs op aanvraag|price on request)$/i;
   pv.querySelectorAll('[data-pos]').forEach(el=>{
     const isVal = el.dataset.pos.endsWith('.val') || el.dataset.pos.endsWith('.def');
     if(isVal) el.addEventListener('focus',()=>{ if(PH.test(el.textContent.trim())) el.textContent=''; });
     el.addEventListener('blur',()=>{
       let v=el.dataset.pos.endsWith('.name')?el.textContent.replace(/Nieuw$/,'').trim():el.textContent.trim();
-      if(isVal && v===''){ v='n.v.t'; el.textContent=v; el.classList.add('poa'); }
+      if(isVal && v===''){ v=NVT(); el.textContent=v; el.classList.add('poa'); }
       else if(isVal){ const f=euroFmt(v); if(f!==v){ v=f; el.textContent=v; }
-        el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(v)); }
+        el.classList.toggle('poa', RX_PH.test(v)); }
       setPosPath(el.dataset.pos, v);
       if(el.dataset.pos.endsWith('.val')) posSync(el.dataset.pos, v);
     });
@@ -1040,9 +1100,9 @@ function renderPreview(){
     el.addEventListener('focus',()=>{ if(PH.test(el.textContent.trim())) el.textContent=''; });
     el.addEventListener('blur',()=>{
       const i=+el.dataset.posman; let v=euroFmt(el.textContent.trim()); if(v!==el.textContent.trim()) el.textContent=v;
-      el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(v));
+      el.classList.toggle('poa', RX_PH.test(v));
       if(v===''){ S.pos.hw[i].man=null; const c=hwTarief(S.pos.hw[i]);   // empty -> back to computed price
-        el.textContent=c; el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(c)); return; }
+        el.textContent=c; el.classList.toggle('poa', RX_PH.test(c)); return; }
       const computed=hwTarief({...S.pos.hw[i], man:null});
       S.pos.hw[i].man = (v===computed)?null:v;   // only store true overrides
     });
@@ -1056,12 +1116,38 @@ function renderPreview(){
   // notes
   pv.querySelectorAll('[data-notes]').forEach(el=>el.addEventListener('blur',()=>{S.fields.notes=el.innerText.trim();}));
   // COPY overrides persist in-session
-  pv.querySelectorAll('[data-copy]').forEach(el=>el.addEventListener('blur',()=>{COPY[el.dataset.copy][S.docType]=el.innerHTML;}));
+  pv.querySelectorAll('[data-copy]').forEach(el=>el.addEventListener('blur',()=>{const c=COPY[el.dataset.copy]; const lg=(S.lang==='en'&&c.en)?'en':'nl'; c[lg][S.docType]=el.innerHTML;}));
   // field-bound text on cover
   pv.querySelectorAll('[data-bind]').forEach(el=>{ el.contentEditable=true; el.addEventListener('blur',()=>{S.fields[el.dataset.bind]=el.textContent.trim(); renderSidebar();}); });
 }
 
+function relocalize(from,to){
+  const a=baseRows(from), b=baseRows(to);
+  S.rows.forEach((r,i)=>{
+    if(!a[i]||!b[i]) return;
+    if(r.name===a[i].name) r.name=b[i].name;
+    if(r.price===a[i].price) r.price=b[i].price;
+  });
+  const pa=posDefaults(from), pb=posDefaults(to);
+  ['hw','mo','ttp','dom','nondom','credit'].forEach(k=>{
+    (S.pos[k]||[]).forEach((row,i)=>{
+      if(!pa[k][i]||!pb[k][i]) return;
+      if(row.name===pa[k][i].name) row.name=pb[k][i].name;
+      if(row.val!==undefined && row.val===pa[k][i].val) row.val=pb[k][i].val;
+      if(row.def!==undefined && row.def===pa[k][i].def) row.def=pb[k][i].def;
+    });
+  });
+  const fa=defaultState(S.docType, from).fields, fb=defaultState(S.docType, to).fields;
+  ['bedrijf','periode'].forEach(k=>{ if(S.fields[k]===fa[k]) S.fields[k]=fb[k]; });
+  if(S.vergelijkLabel===(from==='en'?'Current rate':'Huidig tarief')) S.vergelijkLabel=(to==='en'?'Current rate':'Huidig tarief');
+}
+
 function renderAll(){
+  document.querySelectorAll('#langSeg button').forEach(b=>{
+    const active=b.dataset.lang===(S.lang||'nl');
+    b.classList.toggle('on',active);
+    b.setAttribute('aria-pressed',String(active));
+  });
   document.querySelectorAll('#docTypeSeg button').forEach(b=>{
     const active=b.dataset.dt===S.docType;
     b.classList.toggle('on',active);
@@ -1076,6 +1162,13 @@ document.querySelectorAll('#docTypeSeg button').forEach(b=>b.addEventListener('c
   if(S.docType==='partner') S.pages.pos=true;   // merchant: keep the user's own POS keuze
   if(S.docType==='partner') S.rows.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; });
   // transaction fee default is € 0,10 for both doc types (see fields.txkosten)
+  renderAll();
+}));
+document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('click',()=>{
+  const to=b.dataset.lang, from=S.lang||'nl';
+  if(to===from) return;
+  relocalize(from,to);
+  S.lang=to;
   renderAll();
 }));
 document.getElementById('resetBtn').addEventListener('click',()=>{
@@ -1193,6 +1286,7 @@ function snapshotState(){
 }
 function restoreState(rec){
   S = rec.state;
+  if(!S.lang) S.lang='nl';
   if(rec.copy) Object.keys(rec.copy).forEach(k=>{ if(COPY[k]) COPY[k]=rec.copy[k]; });
   renderAll();
   applyEdits(rec.edits);
@@ -1520,7 +1614,7 @@ document.getElementById('htmlBtn').addEventListener('click', async ()=>{
 document.getElementById('preview').addEventListener('input', e=>{
   const t=e.target.closest ? e.target.closest('.posval') : null;
   if(!t) return;
-  t.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(t.textContent));
+  t.classList.toggle('poa', RX_PH.test(t.textContent));
   if(t.dataset.pos && t.dataset.pos.endsWith('.val') && typeof posSync==='function') posSync(t.dataset.pos, t.textContent.trim());
 });
 
@@ -1551,7 +1645,7 @@ async function makePdfBlob(onProgress){
 }
 function pdfFilename(){
   const b=(S.fields.bedrijf||'voorstel').replace(/[\\/:*?"<>|\[\]]/g,'').trim()||'voorstel';
-  const t=S.docType==='partner'?'Partner overeenkomst':'Voorstel';
+  const t=L(S.docType==='partner'?'Partner overeenkomst':'Voorstel', S.docType==='partner'?'Partner agreement':'Proposal');
   return `${t} MultiSafepay - ${b}.pdf`;
 }
 pdfBtn.addEventListener('click', async ()=>{
@@ -1593,15 +1687,15 @@ const SHARESKEY='msp_shares_v1';
 function sigFieldDefs(isP){
   return [
     {key:'partij', label:(isP?'Partner':'Merchant')+':'},
-    {key:'datumplaats', label:'Datum en plaats'},
-    {key:'bedrijfsnaam', label:'Bedrijfsnaam/handelsnaam', small:'(zoals opgegeven bij Kamer van Koophandel)'},
-    {key:'kvk', label:'KvK-nummer:'},
-    {key:'bedrijfsvorm', label:'Bedrijfsvorm:'},
-    {sub:'Contactgegevens'},
-    {key:'contactnaam', label:'Voor- en achternaam:'},
-    {key:'telefoon', label:'Telefoonnummer:'},
-    {key:'email', label:'E-mailadres:'},
-    {key:'handtekening', label:'Handtekening tekenbevoegde', image:true, gap:true},
+    {key:'datumplaats', label:L('Datum en plaats','Date and place')},
+    {key:'bedrijfsnaam', label:L('Bedrijfsnaam/handelsnaam','Company/trade name'), small:L('(zoals opgegeven bij Kamer van Koophandel)','(as registered with the Chamber of Commerce)')},
+    {key:'kvk', label:L('KvK-nummer:','Chamber of Commerce number:')},
+    {key:'bedrijfsvorm', label:L('Bedrijfsvorm:','Legal form:')},
+    {sub:L('Contactgegevens','Contact details')},
+    {key:'contactnaam', label:L('Voor- en achternaam:','First and last name:')},
+    {key:'telefoon', label:L('Telefoonnummer:','Phone number:')},
+    {key:'email', label:L('E-mailadres:','Email address:')},
+    {key:'handtekening', label:L('Handtekening tekenbevoegde','Signature of authorised signatory'), image:true, gap:true},
   ];
 }
 
