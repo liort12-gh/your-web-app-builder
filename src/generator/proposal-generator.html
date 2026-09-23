@@ -273,6 +273,10 @@ html,body,*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
       <button data-dt="partner">Partner</button>
       <button data-dt="pos">POS only</button>
     </div>
+    <div class="seg" id="langSeg" title="Taal van het voorstel" aria-label="Taal van het voorstel">
+      <button data-lang="nl">NL</button>
+      <button data-lang="en">EN</button>
+    </div>
     <div class="proposal-context">
       <select id="savedSel" title="Open een opgeslagen voorstel"><option value="">— Opgeslagen voorstellen —</option></select>
       <span id="saveState" class="savestate" role="status" aria-live="polite"></span>
@@ -319,72 +323,104 @@ const A = window.__ASSETS;
 const MARK = `<svg viewBox="0 0 48 49" xmlns="http://www.w3.org/2000/svg"><path fill="#00ABED" d="M0 0 L48 44 L48 49 L0 49 Z"/><path fill="#004970" d="M27 19 L48 0.5 L48 37.5 Z"/></svg>`;
 document.getElementById('brandmark').innerHTML = MARK;
 
+/* ---------- taal ---------- */
+/* De app zelf blijft Nederlands; alleen het voorstel schakelt tussen NL en EN. */
+function L(nl,en){ return (typeof S!=='undefined' && S && S.lang==='en') ? en : nl; }
+function POA(){ return L('Prijs op aanvraag','Price on request'); }
+function NVT(){ return L('n.v.t','n/a'); }
+const RX_POA=/aanvraag|on request/i;
+const RX_PH=/n\.v\.t|n\/a|aanvraag|on request/i;
+const CAT_LABELS={
+  'CREDITCARDS':{nl:'CREDITCARDS',en:'CREDIT CARDS'},
+  'DEBIT CARDS':{nl:'DEBIT CARDS',en:'DEBIT CARDS'},
+  'ONLINE BANKING':{nl:'ONLINE BANKING',en:'ONLINE BANKING'},
+  'BANKOVERBOEKING & SEPA INCASSO':{nl:'BANKOVERBOEKING & SEPA INCASSO',en:'BANK TRANSFER & SEPA DIRECT DEBIT'},
+  'ACHTERAF BETALEN':{nl:'ACHTERAF BETALEN',en:'BUY NOW, PAY LATER'},
+  'WALLET':{nl:'WALLET',en:'WALLETS'},
+  'GIFTCARDS':{nl:'GIFTCARDS',en:'GIFT CARDS'}
+};
+function catLabel(cat){ const c=CAT_LABELS[cat]; return c? (S.lang==='en'?c.en:c.nl) : cat; }
+
 /* ---------- default row sets ---------- */
-function baseRows(){ return [
+function baseRows(lang){
+ const en=(lang||'nl')==='en';
+ const poa=en?'Price on request':'Prijs op aanvraag';
+ const P=(nl,e)=>en?e:nl;
+ return [
  {cat:'CREDITCARDS', key:'mastercard', name:'Mastercard', price:'1,40 %', on:true},
  {cat:'CREDITCARDS', key:'visa', name:'Visa', price:'1,40 %', on:true},
- {cat:'CREDITCARDS', key:'amex', name:'American Express', price:'Prijs op aanvraag', on:true},
- {cat:'CREDITCARDS', key:'cartesbancaires', name:'Cartes Bancaires (Frankrijk)', price:'Prijs op aanvraag', on:true},
+ {cat:'CREDITCARDS', key:'amex', name:'American Express', price:poa, on:true},
+ {cat:'CREDITCARDS', key:'cartesbancaires', name:P('Cartes Bancaires (Frankrijk)','Cartes Bancaires (France)'), price:poa, on:true},
  {cat:'DEBIT CARDS', key:'maestro', name:'Maestro', price:'1,40 %', on:true},
- {cat:'DEBIT CARDS', key:'bancontact', name:'Bancontact (+QR) (België)', price:'€ 0,12', on:true},
- {cat:'DEBIT CARDS', key:'postepay', name:'Postepay (Italië)', price:'Prijs op aanvraag', on:false},
- {cat:'DEBIT CARDS', key:'dankort', name:'Dankort (Denemarken)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'ideal', name:'iDEAL (+QR) (Nederland)', price:'€ 0,10', on:true},
- {cat:'ONLINE BANKING', key:'belfius', name:'Belfius (België)', price:'0,70 %', on:true},
- {cat:'ONLINE BANKING', key:'kbc', name:'KBC/CBC (België)', price:'0,70 %', on:true},
- {cat:'ONLINE BANKING', key:'eps', name:'EPS (Oostenrijk)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'mybank', name:'MyBank (Italië)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'przelewy24', name:'Przelewy24 (Polen)', price:'Prijs op aanvraag', on:true},
- {cat:'ONLINE BANKING', key:'trustly', name:'Trustly (Europa)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'trustpay', name:'TrustPay (Tsjechië)', price:'Prijs op aanvraag', on:false},
- {cat:'ONLINE BANKING', key:'multibanco', name:'Multibanco (Portugal)', price:'Prijs op aanvraag', on:false},
- {cat:'BANKOVERBOEKING & SEPA INCASSO', key:'bankoverboeking', name:'Bankoverboeking', price:'€ 0,20', on:true},
- {cat:'BANKOVERBOEKING & SEPA INCASSO', key:'sepadd', name:'SEPA Direct Debit', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'bno', name:'MultiSafepay Betaal na Ontvangst (NL)', price:'Prijs op aanvraag', on:false},
- {cat:'ACHTERAF BETALEN', key:'bit', name:'MultiSafepay Betaal in Termijnen (NL)', price:'Prijs op aanvraag', on:false},
- {cat:'ACHTERAF BETALEN', key:'billink', name:'Billink (NL, BE & DE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'billink', name:'Billink B2B', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (NL, BE, DE, AT, CH)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (NL, BE, DE, AT, CH)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (NL, BE, DE, AT, CH)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (IT, ES, FR, PT, GR, SK, IE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (IT, ES, FR, PT, GR, SK, IE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (IT, ES, FR, PT, GR, SK, IE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'riverty', name:'Riverty (NL, BE en DE)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'in3', name:'iDEAL in3 (NL)', price:'Prijs op aanvraag', on:true},
- {cat:'ACHTERAF BETALEN', key:'zinia', name:'Zinia by Santander (NL)', price:'Prijs op aanvraag', on:false},
- {cat:'WALLET', key:'paypal', name:'PayPal', price:'PayPal kosten', on:true},
- {cat:'WALLET', key:'applepay', name:'Apple Pay', price:'Credit-/Debitcard kosten', on:true},
- {cat:'WALLET', key:'googlepay', name:'Google Pay', price:'Credit-/Debitcard kosten', on:true},
- {cat:'WALLET', key:'amazonpay', name:'Amazon Pay', price:'Prijs op aanvraag', on:false},
- {cat:'WALLET', key:'mbway', name:'MB Way (Portugal)', price:'Prijs op aanvraag', on:false},
- {cat:'WALLET', key:'alipay', name:'Alipay', price:'Prijs op aanvraag', on:false},
- {cat:'WALLET', key:'wechatpay', name:'WeChat Pay', price:'Prijs op aanvraag', on:false},
- {cat:'GIFTCARDS', key:'giftcards', name:'Diverse, o.a. Fashioncheque, Intersolve.', price:'Giftcard kosten', on:false},
+ {cat:'DEBIT CARDS', key:'bancontact', name:P('Bancontact (+QR) (Belgi\u00eb)','Bancontact (+QR) (Belgium)'), price:'\u20ac 0,12', on:true},
+ {cat:'DEBIT CARDS', key:'postepay', name:P('Postepay (Itali\u00eb)','Postepay (Italy)'), price:poa, on:false},
+ {cat:'DEBIT CARDS', key:'dankort', name:P('Dankort (Denemarken)','Dankort (Denmark)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'ideal', name:P('iDEAL (+QR) (Nederland)','iDEAL (+QR) (Netherlands)'), price:'\u20ac 0,10', on:true},
+ {cat:'ONLINE BANKING', key:'belfius', name:P('Belfius (Belgi\u00eb)','Belfius (Belgium)'), price:'0,70 %', on:true},
+ {cat:'ONLINE BANKING', key:'kbc', name:P('KBC/CBC (Belgi\u00eb)','KBC/CBC (Belgium)'), price:'0,70 %', on:true},
+ {cat:'ONLINE BANKING', key:'eps', name:P('EPS (Oostenrijk)','EPS (Austria)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'mybank', name:P('MyBank (Itali\u00eb)','MyBank (Italy)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'przelewy24', name:P('Przelewy24 (Polen)','Przelewy24 (Poland)'), price:poa, on:true},
+ {cat:'ONLINE BANKING', key:'trustly', name:P('Trustly (Europa)','Trustly (Europe)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'trustpay', name:P('TrustPay (Tsjechi\u00eb)','TrustPay (Czech Republic)'), price:poa, on:false},
+ {cat:'ONLINE BANKING', key:'multibanco', name:'Multibanco (Portugal)', price:poa, on:false},
+ {cat:'BANKOVERBOEKING & SEPA INCASSO', key:'bankoverboeking', name:P('Bankoverboeking','Bank transfer'), price:'\u20ac 0,20', on:true},
+ {cat:'BANKOVERBOEKING & SEPA INCASSO', key:'sepadd', name:'SEPA Direct Debit', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'bno', name:P('MultiSafepay Betaal na Ontvangst (NL)','MultiSafepay Pay After Delivery (NL)'), price:poa, on:false},
+ {cat:'ACHTERAF BETALEN', key:'bit', name:P('MultiSafepay Betaal in Termijnen (NL)','MultiSafepay Pay in Instalments (NL)'), price:poa, on:false},
+ {cat:'ACHTERAF BETALEN', key:'billink', name:'Billink (NL, BE & DE)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'billink', name:'Billink B2B', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (NL, BE, DE, AT, CH)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (NL, BE, DE, AT, CH)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (NL, BE, DE, AT, CH)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'riverty', name:P('Riverty (NL, BE en DE)','Riverty (NL, BE and DE)'), price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'in3', name:'iDEAL in3 (NL)', price:poa, on:true},
+ {cat:'ACHTERAF BETALEN', key:'zinia', name:'Zinia by Santander (NL)', price:poa, on:false},
+ {cat:'WALLET', key:'paypal', name:'PayPal', price:P('PayPal kosten','PayPal fees'), on:true},
+ {cat:'WALLET', key:'applepay', name:'Apple Pay', price:P('Credit-/Debitcard kosten','Credit/debit card fees'), on:true},
+ {cat:'WALLET', key:'googlepay', name:'Google Pay', price:P('Credit-/Debitcard kosten','Credit/debit card fees'), on:true},
+ {cat:'WALLET', key:'amazonpay', name:'Amazon Pay', price:poa, on:false},
+ {cat:'WALLET', key:'mbway', name:'MB Way (Portugal)', price:poa, on:false},
+ {cat:'WALLET', key:'alipay', name:'Alipay', price:poa, on:false},
+ {cat:'WALLET', key:'wechatpay', name:'WeChat Pay', price:poa, on:false},
+ {cat:'GIFTCARDS', key:'giftcards', name:P('Diverse, o.a. Fashioncheque, Intersolve.','Various, incl. Fashioncheque, Intersolve.'), price:P('Giftcard kosten','Gift card fees'), on:false},
 ];}
 
-function defaultState(dt){
-  const today = new Date().toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+function posDefaults(lang){
+  const en=(lang||'nl')==='en';
+  const P=(nl,e)=>en?e:nl;
+  const na=en?'n/a':'n.v.t';
   return {
+      hw:[{name:'P2 Smartpad',def:'\u20ac 349,-',nieuw:false,on:true},{name:'P2 Lite SE',def:'\u20ac 299,-',nieuw:false,on:false},{name:'P3 H',def:'\u20ac 349,-',nieuw:true,on:false},{name:'P3 KH',def:'\u20ac 329,-',nieuw:true,on:false},{name:'P3 Air',def:'\u20ac 399,-',nieuw:true,on:true},{name:'P3 Mix + Docker',def:'\u20ac 749,-',nieuw:false,on:true}],
+      mo:[{name:'Service fee*',val:'\u20ac 6,95'},{name:P('Connection fee per actieve device per maand**','Connection fee per active device per month**'),val:'\u20ac 2,95'}],
+      ttp:[{name:P('Licentie fee per actieve Tap to Pay device per maand','Licence fee per active Tap to Pay device per month'),val:'\u20ac 9,95'},{name:P('Opslag per Tap to Pay transactie','Markup per Tap to Pay transaction'),val:'\u20ac 0,06'}],
+      dom:[{fl:'NL',name:P('Nederland (merchant in NL)','Netherlands (merchant in NL)'),val:na},{fl:'BE',name:P('Belgi\u00eb (merchant in BE)','Belgium (merchant in BE)'),val:na},{fl:'DE',name:P('Duitsland (merchant in DE)','Germany (merchant in DE)'),val:na}],
+      nondom:[{k:'visa',name:'Visa Debit',val:na},{k:'mastercard',name:'Mastercard Debit',val:na}],
+      credit:[{k:'visa',name:'Visa Credit',val:na},{k:'mastercard',name:'Mastercard Credit',val:na},{k:'amex',name:'American Express',val:na}]
+  };
+}
+
+function defaultState(dt, lang){
+  const lg = lang || ((typeof S!=='undefined' && S && S.lang) ? S.lang : 'nl');
+  const en = lg==='en';
+  const today = new Date().toLocaleDateString(en?'en-GB':'nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+  return {
+    lang: lg,
     docType: dt||'merchant',
     fields:{
-      bedrijf:'[Bedrijfsnaam]', datum:today, geldig:'', periode:'24 maanden', auteur:'Lior Tacq',
+      bedrijf:en?'[Company name]':'[Bedrijfsnaam]', datum:today, geldig:'', periode:en?'24 months':'24 maanden', auteur:'Lior Tacq',
       txkosten:'€ 0,10', refund:'€ 0,19', payout:'€ 0,50', viban:'€ 0,02',
       retrieval:'€ 5,00', chargeback:'€ 25,00', reversal:'€ 1,00', moi:'€ 60,00',
       notes:''
     },
     pages:{cover:true, product:false, benefits:false, agreement:false, financieel:true, tabel:true, pos:['partner','pos'].includes(dt||'merchant'), sig:true, notes:false},
-    rows: (()=>{ const rs=baseRows(); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
-    pos: {
-      hw:[{name:'P2 Smartpad',def:'\u20ac 349,-',nieuw:false,on:true},{name:'P2 Lite SE',def:'\u20ac 299,-',nieuw:false,on:false},{name:'P3 H',def:'\u20ac 349,-',nieuw:true,on:false},{name:'P3 KH',def:'\u20ac 329,-',nieuw:true,on:false},{name:'P3 Air',def:'\u20ac 399,-',nieuw:true,on:true},{name:'P3 Mix + Docker',def:'\u20ac 749,-',nieuw:false,on:true}],
-      mo:[{name:'Service fee*',val:'\u20ac 6,95'},{name:'Connection fee per actieve device per maand**',val:'\u20ac 2,95'}],
-      ttp:[{name:'Licentie fee per actieve Tap to Pay device per maand',val:'\u20ac 9,95'},{name:'Opslag per Tap to Pay transactie',val:'\u20ac 0,06'}],
-      dom:[{fl:'NL',name:'Nederland (merchant in NL)',val:'n.v.t'},{fl:'BE',name:'Belgi\u00eb (merchant in BE)',val:'n.v.t'},{fl:'DE',name:'Duitsland (merchant in DE)',val:'n.v.t'}],
-      nondom:[{k:'visa',name:'Visa Debit',val:'n.v.t'},{k:'mastercard',name:'Mastercard Debit',val:'n.v.t'}],
-      credit:[{k:'visa',name:'Visa Credit',val:'n.v.t'},{k:'mastercard',name:'Mastercard Credit',val:'n.v.t'},{k:'amex',name:'American Express',val:'n.v.t'}]
-    },
+    rows: (()=>{ const rs=baseRows(lg); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
+    pos: posDefaults(lg),
     vergelijk: false,   // merchant: toon kolom met huidige tarieven
-    vergelijkLabel: 'Huidig tarief',
+    vergelijkLabel: en?'Current rate':'Huidig tarief',
     oud: {},            // row index -> huidig tarief
     poskorting: 0,
     qty: {},         // device index -> aantal (POS only)
@@ -396,16 +432,38 @@ let S = defaultState('merchant');
 
 /* ---------- copy blocks ---------- */
 const COPY = {
- coverTitle:{merchant:'Omnichannel betalingen van A tot Z', partner:'Partner overeenkomst'},
- coverSub1:{merchant:'Verhoog uw omzet met slimme, hoogwaardige betaaloplossingen', partner:'Maak gebruik van de beste betaaloplossingen'},
- coverSub2:{merchant:'Acquirer en processor van de bekende creditcards', partner:'Acquirer en processor voor alle bekende creditcards en Bancontact'},
- acqBody:{
-  merchant:'Wij beheren de gehele betaalstroom voor creditcards tussen consument en webwinkel. Het verwijderen van derde partijen zorgt voor een snellere service en uitbetaling. Mochten er marktbrede downtimes zijn, krijgen wij u sneller weer online.',
-  partner:'Wij beheren de gehele betaalstroom voor creditcards tussen consument en merchant. Het verwijderen van derde partijen zorgt voor een snellere service en uitbetaling. Mochten er marktbrede downtimes zijn, zijn uw klanten bij MultiSafepay sneller weer online.'
+ coverTitle:{
+  nl:{merchant:'Omnichannel betalingen van A tot Z', partner:'Partner overeenkomst'},
+  en:{merchant:'Omnichannel payments from A to Z', partner:'Partner agreement'}
  },
- finTitle:{merchant:'Financieel voorstel', partner:'Financieel voorstel (inkoop)'},
- footerLabel:{merchant:'Samenwerkingsvoorstel', partner:'Samenwerkingsvoorstel'}
+ coverSub1:{
+  nl:{merchant:'Verhoog uw omzet met slimme, hoogwaardige betaaloplossingen', partner:'Maak gebruik van de beste betaaloplossingen'},
+  en:{merchant:'Grow your revenue with smart, high-quality payment solutions', partner:'Take advantage of the best payment solutions'}
+ },
+ coverSub2:{
+  nl:{merchant:'Acquirer en processor van de bekende creditcards', partner:'Acquirer en processor voor alle bekende creditcards en Bancontact'},
+  en:{merchant:'Acquirer and processor of all major credit cards', partner:'Acquirer and processor for all major credit cards and Bancontact'}
+ },
+ acqBody:{
+  nl:{
+   merchant:'Wij beheren de gehele betaalstroom voor creditcards tussen consument en webwinkel. Het verwijderen van derde partijen zorgt voor een snellere service en uitbetaling. Mochten er marktbrede downtimes zijn, krijgen wij u sneller weer online.',
+   partner:'Wij beheren de gehele betaalstroom voor creditcards tussen consument en merchant. Het verwijderen van derde partijen zorgt voor een snellere service en uitbetaling. Mochten er marktbrede downtimes zijn, zijn uw klanten bij MultiSafepay sneller weer online.'
+  },
+  en:{
+   merchant:'We manage the entire credit card payment flow between the consumer and your webshop. Removing third parties means faster service and faster payouts. Should there be market-wide downtime, we get you back online sooner.',
+   partner:'We manage the entire credit card payment flow between the consumer and the merchant. Removing third parties means faster service and faster payouts. Should there be market-wide downtime, your clients are back online sooner with MultiSafepay.'
+  }
+ },
+ finTitle:{
+  nl:{merchant:'Financieel voorstel', partner:'Financieel voorstel (inkoop)'},
+  en:{merchant:'Financial proposal', partner:'Financial proposal (buy rates)'}
+ },
+ footerLabel:{
+  nl:{merchant:'Samenwerkingsvoorstel', partner:'Samenwerkingsvoorstel'},
+  en:{merchant:'Partnership proposal', partner:'Partnership proposal'}
+ }
 };
+function copyOf(key){ const c=COPY[key]; const lg=(S.lang==='en'&&c.en)?'en':'nl'; return c[lg][S.docType] || c['nl'][S.docType]; }
 
 /* ---------- render sidebar ---------- */
 function renderSidebar(){
@@ -496,7 +554,7 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 
 /* ---------- page templates ---------- */
 function logoBlock(){return `<div class="plogo">${MARK}<span class="wm"><span class="lt">Multi</span>Safepay</span></div>`}
-function foot(){return `<div class="pfoot"><span contenteditable data-copy="footer">${COPY.footerLabel[S.docType]}</span><span class="pn"></span></div>`}
+function foot(){return `<div class="pfoot"><span contenteditable data-copy="footer">${copyOf('footerLabel')}</span><span class="pn"></span></div>`}
 
 function pgCover(){
   const isP=S.docType==='partner', F=S.fields;
@@ -506,9 +564,9 @@ function pgCover(){
       <img class="hero" src="${isP?A.hero_partner:A.hero_merchant}">
     </div>
     <div class="title">
-      <h1 contenteditable data-copy="coverTitle">${COPY.coverTitle[S.docType]}</h1>
-      <p contenteditable data-copy="coverSub1">${COPY.coverSub1[S.docType]}</p>
-      <p contenteditable data-copy="coverSub2">${COPY.coverSub2[S.docType]}</p>
+      <h1 contenteditable data-copy="coverTitle">${copyOf('coverTitle')}</h1>
+      <p contenteditable data-copy="coverSub1">${copyOf('coverSub1')}</p>
+      <p contenteditable data-copy="coverSub2">${copyOf('coverSub2')}</p>
     </div>
     <div class="meta">
       <div><div class="lbl">Persoonlijk voorstel voor:</div><div class="val big" data-bind="bedrijf">${esc(F.bedrijf)}</div>
@@ -526,7 +584,7 @@ function pgProduct(){
   return `<div class="page"><div class="pad">
     ${logoBlock()}
     <h2 class="sec">Acquirer &amp; processor</h2>
-    <p class="lead" contenteditable data-copy="acqBody">${COPY.acqBody[S.docType]}</p>
+    <p class="lead" contenteditable data-copy="acqBody">${copyOf('acqBody')}</p>
     <div class="threecol">
       <div contenteditable><h4>Geen derde partijen</h4><p>Hogere beschikbaarheid; minder schakels, meer controle.</p></div>
       <div contenteditable><h4>Snellere uitbetaling</h4><p>Voorkom vertragingen en tijdsverspilling met snelle uitkering in meerdere valuta's.</p></div>
@@ -654,7 +712,7 @@ function pgFinancieel(){
   const isP=S.docType==='partner';
   return `<div class="page"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec" contenteditable>${COPY.finTitle[S.docType]}</h2>
+    <h2 class="sec" contenteditable>${copyOf('finTitle')}</h2>
     <p class="lead" contenteditable>Tarieven in dit voorstel worden vermeld in Euro (€) en zijn exclusief BTW. Tarieven uitgedrukt in een percentage (%) worden berekend over het totale transactiebedrag. Alle genoemde tarieven zijn onder voorbehoud van acceptatie, wijzigingen en fouten.</p>
     <div class="finwrap">
       <div>
@@ -696,7 +754,7 @@ function pgTabel(){
   for(const g of cats){
     let b=`<tr class="cat"><td colspan="${cols}">${g.cat}</td></tr>`;
     for(const r of g.rows){
-      const i=S.rows.indexOf(r), poa=/aanvraag/i.test(r.price);
+      const i=S.rows.indexOf(r), poa=RX_POA.test(r.price);
       const oud=(S.oud||{})[i]||'';
       b+=`<tr class="m"><td class="ic"><img src="${A[r.key]||''}" onerror="this.style.display='none'"></td><td class="nm" contenteditable>${esc(r.name)}</td>`+
          (cmp?`<td class="pr old${oud?'':' poa'}" contenteditable data-oud="${i}">${esc(oud||'\u2014')}</td>`:'')+
@@ -793,7 +851,7 @@ function posSync(path, val){
       if((r.k==='visa'||r.k==='mastercard') && !(list===from && j===i)){
         r.val=val;
         const oEl=document.querySelector(`#preview [data-pos="${list}.${j}.val"]`);
-        if(oEl && oEl!==document.activeElement){ oEl.textContent=val; oEl.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(val)); }
+        if(oEl && oEl!==document.activeElement){ oEl.textContent=val; oEl.classList.toggle('poa', RX_PH.test(val)); }
       }
     });
   });
@@ -813,7 +871,7 @@ function posTotals(){
   return {units, one};
 }
 function money(v){ return '\u20ac '+v.toFixed(2).replace('.',','); }
-function posGray(v){ return /n\.v\.t|aanvraag/i.test(v||'')?' poa':''; }
+function posGray(v){ return RX_PH.test(v||'')?' poa':''; }
 function posHead(label, h1, h2){
   return `<tr class="phead"><td colspan="2" contenteditable>${label}</td><td class="vh" contenteditable>${h1||''}</td><td class="vh" contenteditable>${h2||''}</td></tr>`;
 }
@@ -984,7 +1042,7 @@ function renderPreview(){
       if(xi!==i && SYNC.includes(x.key)){
         x.price=val;
         const oEl=pv.querySelector(`[data-price="${xi}"]`);
-        if(oEl && oEl!==el && oEl!==document.activeElement){ oEl.textContent=composePrice(val); oEl.classList.toggle('poa',/aanvraag/i.test(val)); }
+        if(oEl && oEl!==el && oEl!==document.activeElement){ oEl.textContent=composePrice(val); oEl.classList.toggle('poa',RX_POA.test(val)); }
       }
     });
   }
@@ -999,18 +1057,18 @@ function renderPreview(){
     });
   });
   pv.querySelectorAll('[data-cmplabel]').forEach(el=>el.addEventListener('blur',()=>{
-    S.vergelijkLabel=el.textContent.trim()||'Huidig tarief'; renderSidebar();
+    S.vergelijkLabel=el.textContent.trim()||L('Huidig tarief','Current rate'); renderSidebar();
   }));
   pv.querySelectorAll('[data-price]').forEach(el=>{
     el.addEventListener('focus',()=>{ const i=+el.dataset.price; const raw=S.rows[i].price;
-      el.textContent=/aanvraag/i.test(raw)?'':raw; });
+      el.textContent=RX_POA.test(raw)?'':raw; });
     el.addEventListener('blur',()=>{ const i=+el.dataset.price;
-      let v=el.textContent.trim(); if(v==='') v='Prijs op aanvraag';
+      let v=el.textContent.trim(); if(v==='') v=POA();
       else v=v.split('+').map(p=>{ p=p.trim(); return (/^\d/.test(p) && !/%/.test(p) && !/^€/.test(p)) ? '€ '+p : p; }).join(' + ');
       S.rows[i].price=v;
-      el.classList.toggle('poa', /aanvraag/i.test(v)); syncCard(el, v);
+      el.classList.toggle('poa', RX_POA.test(v)); syncCard(el, v);
       const rr=S.rows[i]; el.textContent=(rr.key==='applepay'||rr.key==='googlepay')?rr.price:composePrice(rr.price); });
-    el.addEventListener('input',()=>{ el.classList.toggle('poa', /aanvraag/i.test(el.textContent)); syncCard(el); });
+    el.addEventListener('input',()=>{ el.classList.toggle('poa', RX_POA.test(el.textContent)); syncCard(el); });
   });
   // POS cell bindings (persist edits across re-renders)
   function setPosPath(path, val){
@@ -1019,15 +1077,15 @@ function renderPreview(){
     for(let i=0;i<parts.length-1;i++) o=o[parts[i]];
     o[parts[parts.length-1]]=val;
   }
-  const PH=/^(n\.v\.t\.?|prijs op aanvraag)$/i;
+  const PH=/^(n\.v\.t\.?|n\/a|prijs op aanvraag|price on request)$/i;
   pv.querySelectorAll('[data-pos]').forEach(el=>{
     const isVal = el.dataset.pos.endsWith('.val') || el.dataset.pos.endsWith('.def');
     if(isVal) el.addEventListener('focus',()=>{ if(PH.test(el.textContent.trim())) el.textContent=''; });
     el.addEventListener('blur',()=>{
       let v=el.dataset.pos.endsWith('.name')?el.textContent.replace(/Nieuw$/,'').trim():el.textContent.trim();
-      if(isVal && v===''){ v='n.v.t'; el.textContent=v; el.classList.add('poa'); }
+      if(isVal && v===''){ v=NVT(); el.textContent=v; el.classList.add('poa'); }
       else if(isVal){ const f=euroFmt(v); if(f!==v){ v=f; el.textContent=v; }
-        el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(v)); }
+        el.classList.toggle('poa', RX_PH.test(v)); }
       setPosPath(el.dataset.pos, v);
       if(el.dataset.pos.endsWith('.val')) posSync(el.dataset.pos, v);
     });
@@ -1040,9 +1098,9 @@ function renderPreview(){
     el.addEventListener('focus',()=>{ if(PH.test(el.textContent.trim())) el.textContent=''; });
     el.addEventListener('blur',()=>{
       const i=+el.dataset.posman; let v=euroFmt(el.textContent.trim()); if(v!==el.textContent.trim()) el.textContent=v;
-      el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(v));
+      el.classList.toggle('poa', RX_PH.test(v));
       if(v===''){ S.pos.hw[i].man=null; const c=hwTarief(S.pos.hw[i]);   // empty -> back to computed price
-        el.textContent=c; el.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(c)); return; }
+        el.textContent=c; el.classList.toggle('poa', RX_PH.test(c)); return; }
       const computed=hwTarief({...S.pos.hw[i], man:null});
       S.pos.hw[i].man = (v===computed)?null:v;   // only store true overrides
     });
@@ -1056,12 +1114,38 @@ function renderPreview(){
   // notes
   pv.querySelectorAll('[data-notes]').forEach(el=>el.addEventListener('blur',()=>{S.fields.notes=el.innerText.trim();}));
   // COPY overrides persist in-session
-  pv.querySelectorAll('[data-copy]').forEach(el=>el.addEventListener('blur',()=>{COPY[el.dataset.copy][S.docType]=el.innerHTML;}));
+  pv.querySelectorAll('[data-copy]').forEach(el=>el.addEventListener('blur',()=>{const c=COPY[el.dataset.copy]; const lg=(S.lang==='en'&&c.en)?'en':'nl'; c[lg][S.docType]=el.innerHTML;}));
   // field-bound text on cover
   pv.querySelectorAll('[data-bind]').forEach(el=>{ el.contentEditable=true; el.addEventListener('blur',()=>{S.fields[el.dataset.bind]=el.textContent.trim(); renderSidebar();}); });
 }
 
+function relocalize(from,to){
+  const a=baseRows(from), b=baseRows(to);
+  S.rows.forEach((r,i)=>{
+    if(!a[i]||!b[i]) return;
+    if(r.name===a[i].name) r.name=b[i].name;
+    if(r.price===a[i].price) r.price=b[i].price;
+  });
+  const pa=posDefaults(from), pb=posDefaults(to);
+  ['hw','mo','ttp','dom','nondom','credit'].forEach(k=>{
+    (S.pos[k]||[]).forEach((row,i)=>{
+      if(!pa[k][i]||!pb[k][i]) return;
+      if(row.name===pa[k][i].name) row.name=pb[k][i].name;
+      if(row.val!==undefined && row.val===pa[k][i].val) row.val=pb[k][i].val;
+      if(row.def!==undefined && row.def===pa[k][i].def) row.def=pb[k][i].def;
+    });
+  });
+  const fa=defaultState(S.docType, from).fields, fb=defaultState(S.docType, to).fields;
+  ['bedrijf','periode'].forEach(k=>{ if(S.fields[k]===fa[k]) S.fields[k]=fb[k]; });
+  if(S.vergelijkLabel===(from==='en'?'Current rate':'Huidig tarief')) S.vergelijkLabel=(to==='en'?'Current rate':'Huidig tarief');
+}
+
 function renderAll(){
+  document.querySelectorAll('#langSeg button').forEach(b=>{
+    const active=b.dataset.lang===(S.lang||'nl');
+    b.classList.toggle('on',active);
+    b.setAttribute('aria-pressed',String(active));
+  });
   document.querySelectorAll('#docTypeSeg button').forEach(b=>{
     const active=b.dataset.dt===S.docType;
     b.classList.toggle('on',active);
@@ -1076,6 +1160,13 @@ document.querySelectorAll('#docTypeSeg button').forEach(b=>b.addEventListener('c
   if(S.docType==='partner') S.pages.pos=true;   // merchant: keep the user's own POS keuze
   if(S.docType==='partner') S.rows.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; });
   // transaction fee default is € 0,10 for both doc types (see fields.txkosten)
+  renderAll();
+}));
+document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('click',()=>{
+  const to=b.dataset.lang, from=S.lang||'nl';
+  if(to===from) return;
+  relocalize(from,to);
+  S.lang=to;
   renderAll();
 }));
 document.getElementById('resetBtn').addEventListener('click',()=>{
@@ -1520,7 +1611,7 @@ document.getElementById('htmlBtn').addEventListener('click', async ()=>{
 document.getElementById('preview').addEventListener('input', e=>{
   const t=e.target.closest ? e.target.closest('.posval') : null;
   if(!t) return;
-  t.classList.toggle('poa', /n\.v\.t|aanvraag/i.test(t.textContent));
+  t.classList.toggle('poa', RX_PH.test(t.textContent));
   if(t.dataset.pos && t.dataset.pos.endsWith('.val') && typeof posSync==='function') posSync(t.dataset.pos, t.textContent.trim());
 });
 
