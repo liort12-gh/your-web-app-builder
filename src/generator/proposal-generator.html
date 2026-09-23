@@ -1285,6 +1285,7 @@ function snapshotState(){
 }
 function restoreState(rec){
   S = rec.state;
+  if(!S.lang) S.lang='nl';
   if(rec.copy) Object.keys(rec.copy).forEach(k=>{ if(COPY[k]) COPY[k]=rec.copy[k]; });
   renderAll();
   applyEdits(rec.edits);
@@ -1643,7 +1644,7 @@ async function makePdfBlob(onProgress){
 }
 function pdfFilename(){
   const b=(S.fields.bedrijf||'voorstel').replace(/[\\/:*?"<>|\[\]]/g,'').trim()||'voorstel';
-  const t=S.docType==='partner'?'Partner overeenkomst':'Voorstel';
+  const t=L(S.docType==='partner'?'Partner overeenkomst':'Voorstel', S.docType==='partner'?'Partner agreement':'Proposal');
   return `${t} MultiSafepay - ${b}.pdf`;
 }
 pdfBtn.addEventListener('click', async ()=>{
