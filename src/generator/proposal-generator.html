@@ -569,12 +569,12 @@ function pgCover(){
       <p contenteditable data-copy="coverSub2">${copyOf('coverSub2')}</p>
     </div>
     <div class="meta">
-      <div><div class="lbl">Persoonlijk voorstel voor:</div><div class="val big" data-bind="bedrijf">${esc(F.bedrijf)}</div>
-        ${isP?`<div class="lbl" style="margin-top:5mm">Gemaakt door:</div><div class="val" data-bind="auteur">${esc(F.auteur)}</div>`:''}</div>
+      <div><div class="lbl">${L('Persoonlijk voorstel voor:','Personal proposal for:')}</div><div class="val big" data-bind="bedrijf">${esc(F.bedrijf)}</div>
+        ${isP?`<div class="lbl" style="margin-top:5mm">${L('Gemaakt door:','Created by:')}</div><div class="val" data-bind="auteur">${esc(F.auteur)}</div>`:''}</div>
       <div>
-        <div class="lbl">Datum voorstel:</div><div class="val" data-bind="datum">${esc(F.datum)}</div>
-        ${!isP&&F.geldig?`<div class="lbl" style="margin-top:4mm">Voorstel geldig tot:</div><div class="val" data-bind="geldig">${esc(F.geldig)}</div>`:''}
-        <div class="lbl" style="margin-top:4mm">Contractperiode:</div><div class="val" data-bind="periode">${esc(F.periode)}</div>
+        <div class="lbl">${L('Datum voorstel:','Proposal date:')}</div><div class="val" data-bind="datum">${esc(F.datum)}</div>
+        ${!isP&&F.geldig?`<div class="lbl" style="margin-top:4mm">${L('Voorstel geldig tot:','Proposal valid until:')}</div><div class="val" data-bind="geldig">${esc(F.geldig)}</div>`:''}
+        <div class="lbl" style="margin-top:4mm">${L('Contractperiode:','Contract term:')}</div><div class="val" data-bind="periode">${esc(F.periode)}</div>
       </div>
     </div>
   </div>`;
@@ -583,23 +583,23 @@ function pgCover(){
 function pgProduct(){
   return `<div class="page"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec">Acquirer &amp; processor</h2>
+    <h2 class="sec">${L('Acquirer &amp; processor','Acquirer &amp; processor')}</h2>
     <p class="lead" contenteditable data-copy="acqBody">${copyOf('acqBody')}</p>
     <div class="threecol">
-      <div contenteditable><h4>Geen derde partijen</h4><p>Hogere beschikbaarheid; minder schakels, meer controle.</p></div>
-      <div contenteditable><h4>Snellere uitbetaling</h4><p>Voorkom vertragingen en tijdsverspilling met snelle uitkering in meerdere valuta's.</p></div>
-      <div contenteditable><h4>Betere conversie</h4><p>Hogere betalingsacceptatie voor lokale en internationale betalingen.</p></div>
+      <div contenteditable><h4>${L('Geen derde partijen','No third parties')}</h4><p>${L('Hogere beschikbaarheid; minder schakels, meer controle.','Higher availability; fewer links in the chain, more control.')}</p></div>
+      <div contenteditable><h4>${L('Snellere uitbetaling','Faster payouts')}</h4><p>${L("Voorkom vertragingen en tijdsverspilling met snelle uitkering in meerdere valuta's.",'Avoid delays and wasted time with fast payouts in multiple currencies.')}</p></div>
+      <div contenteditable><h4>${L('Betere conversie','Better conversion')}</h4><p>${L('Hogere betalingsacceptatie voor lokale en internationale betalingen.','Higher acceptance rates for local and international payments.')}</p></div>
     </div>
     <div class="hr"></div>
-    <h2 class="sec center">Integreer en verwerk betalingen op uw manier</h2>
-    <p class="lead" style="text-align:center;margin:0 auto 4mm" contenteditable>Met intern ontwikkelde oplossingen, toegewijde developers en een gespecialiseerd integratieteam profiteert u altijd van de laatste ontwikkelingen.</p>
+    <h2 class="sec center">${L('Integreer en verwerk betalingen op uw manier','Integrate and process payments your way')}</h2>
+    <p class="lead" style="text-align:center;margin:0 auto 4mm" contenteditable>${L('Met intern ontwikkelde oplossingen, toegewijde developers en een gespecialiseerd integratieteam profiteert u altijd van de laatste ontwikkelingen.','With in-house developed solutions, dedicated developers and a specialised integration team, you always benefit from the latest developments.')}</p>
     <div class="threecol">
-      <div contenteditable><h4>API</h4><p>Onze krachtige, flexibele integratie. Perfect voor een integratie op maat.</p></div>
-      <div contenteditable><h4>Kant-en-klare plugins &amp; apps</h4><p>In-house ontwikkelde integraties voor alle ecommerce platformen, uitgerust met de nieuwste features.</p></div>
-      <div contenteditable><h4>SDK</h4><p>Vereenvoudig het werken met onze API via onze SDK, volledig geïntegreerd binnen uw app.</p></div>
-      <div contenteditable><h4>Embedded</h4><p>Integreer betaalmethoden in uw checkout en gebruik onze smart payment components voor de perfecte betaalervaring.</p></div>
-      <div contenteditable><h4>Hosted</h4><p>Verwerk snel en gemakkelijk betalingen via onze hosted betaalpagina's. Veilig, snel en boordevol innovatieve functies.</p></div>
-      <div contenteditable><h4>Betaallinks</h4><p>Flexibel, snel en eenvoudig. Genereer en verstuur betaallinks via bijvoorbeeld papieren facturen (QR) of e-mail/sms.</p></div>
+      <div contenteditable><h4>API</h4><p>${L('Onze krachtige, flexibele integratie. Perfect voor een integratie op maat.','Our powerful, flexible integration. Perfect for a tailor-made setup.')}</p></div>
+      <div contenteditable><h4>${L('Kant-en-klare plugins &amp; apps','Ready-made plugins &amp; apps')}</h4><p>${L('In-house ontwikkelde integraties voor alle ecommerce platformen, uitgerust met de nieuwste features.','In-house developed integrations for all ecommerce platforms, equipped with the latest features.')}</p></div>
+      <div contenteditable><h4>SDK</h4><p>${L('Vereenvoudig het werken met onze API via onze SDK, volledig geïntegreerd binnen uw app.','Simplify working with our API through our SDK, fully integrated within your app.')}</p></div>
+      <div contenteditable><h4>Embedded</h4><p>${L('Integreer betaalmethoden in uw checkout en gebruik onze smart payment components voor de perfecte betaalervaring.','Integrate payment methods into your checkout and use our smart payment components for the perfect payment experience.')}</p></div>
+      <div contenteditable><h4>Hosted</h4><p>${L("Verwerk snel en gemakkelijk betalingen via onze hosted betaalpagina's. Veilig, snel en boordevol innovatieve functies.",'Process payments quickly and easily through our hosted payment pages. Secure, fast and packed with innovative features.')}</p></div>
+      <div contenteditable><h4>${L('Betaallinks','Payment links')}</h4><p>${L('Flexibel, snel en eenvoudig. Genereer en verstuur betaallinks via bijvoorbeeld papieren facturen (QR) of e-mail/sms.','Flexible, fast and simple. Generate and send payment links via paper invoices (QR) or email/SMS, for example.')}</p></div>
     </div>
     ${foot()}
   </div></div>`;
@@ -609,12 +609,12 @@ function pgBenefits(){
   const isP=S.docType==='partner';
   return `<div class="page"><div class="pad">
     ${logoBlock()}
-    <h2 class="sec">Verbeter uw business met MultiSafepay</h2>
+    <h2 class="sec">${L('Verbeter uw business met MultiSafepay','Improve your business with MultiSafepay')}</h2>
     <div class="twocol">
-      <div class="benefit" contenteditable><h4>Optimaliseer uw conversie</h4><div class="tag">Lever een frictieloze betaalervaring</div><ul>
-        <li>Win verloren omzet terug met Second Chance e-mails</li><li>Integreer betaalmethoden direct in ${isP?'de checkout van uw klanten':'uw checkout'}</li><li>Onthoud en versleutel data voor razendsnelle herhaalaankopen</li><li>Optimaliseer de betaalervaring voor mobile devices</li></ul></div>
-      <div class="benefit" contenteditable><h4>Verkoop internationaal</h4><div class="tag">Breid gemakkelijk uit naar het buitenland</div><ul>
-        <li>Bied de juiste betaalmethoden voor de juiste markt aan</li><li>Accepteer en verwerk tot wel 12 valuta</li><li>Toon betaalpagina's in de juiste taal</li></ul></div>
+      <div class="benefit" contenteditable><h4>${L('Optimaliseer uw conversie','Optimise your conversion')}</h4><div class="tag">${L('Lever een frictieloze betaalervaring','Deliver a frictionless payment experience')}</div><ul>
+        <li>${L('Win verloren omzet terug met Second Chance e-mails','Win back lost revenue with Second Chance emails')}</li><li>${L('Integreer betaalmethoden direct in '+(isP?'de checkout van uw klanten':'uw checkout'),'Integrate payment methods directly into '+(isP?"your clients' checkout":'your checkout'))}</li><li>${L('Onthoud en versleutel data voor razendsnelle herhaalaankopen','Store and encrypt data for lightning-fast repeat purchases')}</li><li>${L('Optimaliseer de betaalervaring voor mobile devices','Optimise the payment experience for mobile devices')}</li></ul></div>
+      <div class="benefit" contenteditable><h4>${L('Verkoop internationaal','Sell internationally')}</h4><div class="tag">${L('Breid gemakkelijk uit naar het buitenland','Expand abroad with ease')}</div><ul>
+        <li>${L('Bied de juiste betaalmethoden voor de juiste markt aan','Offer the right payment methods for the right market')}</li><li>${L('Accepteer en verwerk tot wel 12 valuta','Accept and process up to 12 currencies')}</li><li>${L("Toon betaalpagina's in de juiste taal",'Show payment pages in the right language')}</li></ul></div>
       <div class="benefit" contenteditable><h4>Stroomlijn facturatie en boekhouding</h4><div class="tag">Houd de administratie overzichtelijk</div><ul>
         <li>Creëer een eigen B2B-facturatieprocedure — zonder kennis van coderen</li><li>Beheer orders tot in de puntjes: splits betalingen en verstuur betaallinks op maat</li><li>Synchroniseer met onze partners en automatiseer de boekhouding</li></ul></div>
       <div class="benefit" contenteditable><h4>Boost creditcardbetalingen</h4><div class="tag">Vereenvoudig het betaalproces voor kaarten</div><ul>
