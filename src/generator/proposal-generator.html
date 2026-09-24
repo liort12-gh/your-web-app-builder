@@ -1528,6 +1528,14 @@ async function buildVectorPdf(onProgress){
       pdf.text(marker, Math.max(0,xRight-w), Y((top+bottom)/2), {baseline:'middle'});
     });
 
+    // 2c. clickable links
+    page.querySelectorAll('a[href^="http"]').forEach(a=>{
+      for(const rc of a.getClientRects()){
+        if(rc.width<=0) continue;
+        try{ pdf.link(X(rc.left),Y(rc.top),rc.width*K,rc.height*K,{url:a.href}); }catch(e){}
+      }
+    });
+
     // 3. text, line by line, positioned exactly where the browser laid it out
     const walker=document.createTreeWalker(page, NodeFilter.SHOW_TEXT, {
       acceptNode(n){
