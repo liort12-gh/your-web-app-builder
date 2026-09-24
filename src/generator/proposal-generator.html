@@ -1565,6 +1565,8 @@ async function buildVectorPdf(onProgress){
         const yMid=Y((ln.top+ln.bottom)/2);
         try{ pdf.text(str, X(ln.left), yMid, {baseline:'middle'}); }catch(e){}
       }
+      const aEl=el.closest('a[href]');
+      if(aEl){ for(const ln of lines){ try{ pdf.link(X(ln.left), Y(ln.top), X(ln.right)-X(ln.left), Y(ln.bottom)-Y(ln.top), {url:aEl.href}); }catch(e){} } }
     }
   }
   return pdf;
