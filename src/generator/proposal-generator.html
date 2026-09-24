@@ -417,7 +417,7 @@ function defaultState(dt, lang){
       retrieval:'€ 5,00', chargeback:'€ 25,00', reversal:'€ 1,00', moi:'€ 60,00',
       notes:''
     },
-    pages:{cover:true, product:false, benefits:false, agreement:false, financieel:true, tabel:true, pos:['partner','pos'].includes(dt||'merchant'), sig:true, notes:false},
+    pages:{cover:true, product:false, benefits:false, agreement:true, financieel:true, tabel:true, pos:['partner','pos'].includes(dt||'merchant'), sig:true, notes:false},
     rows: (()=>{ const rs=baseRows(lg); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
     pos: posDefaults(lg),
     vergelijk: false,   // merchant: toon kolom met huidige tarieven
@@ -644,7 +644,7 @@ const LEGAL_MERCHANT = `
 <li>Na opdracht door Merchant worden de tegoeden door De Stichting uiterlijk binnen enkele werkdagen na ontvangst van de tegoeden van de Acquiring Bank daadwerkelijk doorgeboekt naar de bankrekening van Merchant.</li>
 <li>Merchant heeft kennisgenomen van de (fraude)risico's die zijn verbonden aan het gebruik van de door MultiSafepay aangeboden betaalmethoden. MultiSafepay tracht deze risico's voor Merchant te beperken, echter is niet aansprakelijk indien deze risico's zich onverhoopt toch voordoen.</li>
 <li>De Overeenkomst tussen MultiSafepay en Merchant wordt aangegaan voor de duur van onbepaalde tijd, ingaande per datum ondertekening. Indien er sprake is van een contract voor bepaalde tijd, kan MultiSafepay na afloop van deze contractperiode nieuwe contractvoorwaarden opstellen welke de huidige voorwaarden uit de Samenwerkingsovereenkomst vervangen.</li>
-<li>De Algemene Voorwaarden en eventuele aanvullende Overeenkomsten zijn van toepassing op deze Samenwerkingsovereenkomst.</li>
+<li>De Algemene Voorwaarden en eventuele aanvullende Overeenkomsten zijn van toepassing op deze Samenwerkingsovereenkomst: <a href="https://www.multisafepay.com/terms-conditions" target="_blank" rel="noopener">https://www.multisafepay.com/terms-conditions</a>.</li>
 <li>Deze Samenwerkingsovereenkomst treedt in plaats van alle voorgaande onderhandelingen, toezeggingen en correspondentie.</li>
 <li>Op de onderhavige overeenkomst zijn de Algemene voorwaarden van MultiSafepay en tarieven van toepassing. Merchant verklaart een exemplaar van deze Algemene voorwaarden voorafgaand aan en bij deze overeenkomst te hebben ontvangen, deze te hebben gelezen en met de toepasselijkheid van de Algemene voorwaarden op deze overeenkomst en met de inhoud daarvan akkoord te gaan.</li>
 </ol>`;
@@ -657,6 +657,7 @@ const LEGAL_PARTNER = `
 <li>MultiSafepay B.V. ('MultiSafepay') bereid is aan de Partner een commissie te verstrekken voor de transacties van elke klant van de Partner die van het MultiSafepay betaalplatform gebruik gaat maken.</li>
 <li>Partner zich verbindt om een professionele koppeling tussen MultiSafepay en de klant te verzorgen.</li>
 <li>Beide partijen overeenstemming hebben bereikt over de voorwaarden waaronder en de wijze waarop invulling wordt gegeven aan het bovenstaande en deze overeenkomst schriftelijk wensen vast te leggen.</li>
+<li>De Algemene Voorwaarden en eventuele aanvullende Overeenkomsten zijn van toepassing op deze Samenwerkingsovereenkomst: <a href="https://www.multisafepay.com/terms-conditions" target="_blank" rel="noopener">https://www.multisafepay.com/terms-conditions</a>.</li>
 </ul>
 <h4>Artikel 1: Vergoeding en betaling</h4>
 <ol>
