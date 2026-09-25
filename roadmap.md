@@ -6,4 +6,4 @@
 - [x] Phase 1 build: sign in, forgot/reset password, sign out, request access, owner approval/rejection/deactivation, ownership transfer by user ID, proposal ownership per user, server-side authorization, protected generator and overview.
 - [x] Phase 1 verification: owner bootstrap, save/open/delete round-trip, PDF download, pending block (UI + no data leak), signed-out redirects, unauthenticated server calls rejected (401).
 - [ ] Publish Phase 1 to the public URL (app stays login-protected).
-- [ ] Phase 2 (deferred): prospect sharing, public proposal links, prospect signing, expiration/revocation, prospect status and notifications.
+- [ ] Phase 2 (ON HOLD pending Compliance approval — plan saved in .lovable/plan.md): prospect signing flow with 6-digit email code gate + audit trail + signed PDF; mandatory revenue calculator before sending; Salesforce sync (stage "Proposal Sent"→"Closed Won/Signed" + Opportunity Amount); post-signing redirect to MSP account signup. Blocked on: Compliance approval, sender email domain, Salesforce connector, signup URLs.
