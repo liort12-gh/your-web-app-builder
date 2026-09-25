@@ -982,12 +982,6 @@ function pgSig(){
   const isP=S.docType==='partner';
   return `<div class="page sig"><div class="pad">
     ${logoBlock()}
-    <p style="font-size:9pt;margin-bottom:2mm" contenteditable>${L('Aldus overeengekomen, opgemaakt en ondertekend te Amsterdam:','Agreed, drawn up and signed in Amsterdam:')}</p>
-    <p style="font-size:9.5pt;font-weight:600">${L('Namens MultiSafepay','On behalf of MultiSafepay')}</p>
-    <div class="sigrow">
-      <div class="who"><b>MultiSafepay</b><span>Olaf Wouter Geurs</span></div>
-      <div class="who"><b>${L('Stichting derdengelden','Stichting derdengelden (client funds foundation)')}</b><span>Niels Alexander Geurs</span></div>
-    </div>
     <h3 class="gd">${L('Gegevens '+(isP?'partner':'merchant'),(isP?'Partner':'Merchant')+' details')}</h3>
     <div class="sigfields">
       ${sigFieldDefs(isP).map(f=>{
