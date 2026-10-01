@@ -536,7 +536,7 @@ function renderSidebar(){
   const vglR=sb.querySelector('#vglRefund');
   if(vglR) vglR.addEventListener('change',()=>{ S.vergelijkRefund=vglR.checked; renderSidebar(); renderPreview(); });
   const ecomEl=sb.querySelector('#ecomOn');
-  if(ecomEl) ecomEl.addEventListener('change',()=>{ S.showEcom=ecomEl.checked; renderPreview(); });
+  if(ecomEl) ecomEl.addEventListener('change',()=>{ S.showEcom=ecomEl.checked; if(!ecomEl.checked && S.docType!=='pos'){ S.pages.pos=true; renderSidebar(); } renderPreview(); });
   const vglL=sb.querySelector('#vglLabel');
   if(vglL) vglL.addEventListener('input',()=>{ S.vergelijkLabel=vglL.value; renderPreview(); });
   sb.querySelectorAll('input[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; renderPreview(); }));
