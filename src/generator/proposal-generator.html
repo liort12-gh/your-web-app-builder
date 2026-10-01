@@ -377,6 +377,9 @@ function baseRows(lang){
  {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Later (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
  {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay Now (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
  {cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna Pay in 3/4 (IT, ES, FR, PT, GR, SK, IE)', price:poa, on:true},
+{cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna - Pay Later - NO, FI, DK, SE', price:poa, on:true},
+{cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna - Pay Now - NO, FI, DK, SE', price:poa, on:true},
+{cat:'ACHTERAF BETALEN', key:'klarna', name:'Klarna - Pay in 3/4 - NO, FI, DK, SE', price:poa, on:true},
  {cat:'ACHTERAF BETALEN', key:'riverty', name:P('Riverty (NL, BE en DE)','Riverty (NL, BE and DE)'), price:poa, on:true},
  {cat:'ACHTERAF BETALEN', key:'in3', name:'iDEAL in3 (NL)', price:poa, on:true},
  {cat:'ACHTERAF BETALEN', key:'zinia', name:'Zinia by Santander (NL)', price:poa, on:false},
@@ -420,6 +423,8 @@ function defaultState(dt, lang){
     pages:{cover:true, product:false, benefits:false, agreement:true, financieel:true, tabel:true, pos:['partner','pos'].includes(dt||'merchant'), sig:true, notes:false},
     rows: (()=>{ const rs=baseRows(lg); if((dt||'merchant')==='partner') rs.forEach(r=>{ if(r.cat==='ACHTERAF BETALEN') r.on=false; }); return rs; })(),
     pos: posDefaults(lg),
+    vergelijkRefund: false,
+    showEcom: true,
     vergelijk: false,   // merchant: toon kolom met huidige tarieven
     vergelijkLabel: en?'Current rate':'Huidig tarief',
     oud: {},            // row index -> huidig tarief
@@ -475,12 +480,16 @@ function renderSidebar(){
     <div class="fld"><label>Datum voorstel</label><input data-f="datum" value="${esc(F.datum)}"></div>
     ${isP?'':`<div class="fld"><label>Voorstel geldig tot</label><input data-f="geldig" value="${esc(F.geldig)}" placeholder="bijv. 30-09-2026"></div>`}
     <div class="fld"><label>Contractperiode</label><input data-f="periode" value="${esc(F.periode)}"></div>
-    ${isP?`<div class="fld"><label>Gemaakt door</label><input data-f="auteur" value="${esc(F.auteur)}"></div>`:''}
+    <div class="fld"><label>Gemaakt door</label><input data-f="auteur" value="${esc(F.auteur||'')}" placeholder="Naam salesmedewerker"></div>
   ${(isP||S.pages.pos)?`<div class="fld"><label>Korting POS hardware (%)</label><input id="poskorting" type="number" min="0" max="100" step="0.5" value="${S.poskorting||0}"></div>`:''}
   ${S.docType==='merchant'?`<h3>Vergelijking</h3>
     <label class="chk"><input type="checkbox" id="vglOn" ${S.vergelijk?'checked':''}> Kolom met huidige tarieven</label>
     ${S.vergelijk?`<div class="fld" style="margin-top:6px"><label>Koptekst kolom</label><input id="vglLabel" value="${esc(S.vergelijkLabel||L('Huidig tarief','Current rate'))}"></div>
-    <div class="hint">Vul per betaalmethode het huidige tarief in door in de tabel op de streep te klikken.</div>`:''}`:''}
+    <div class="hint">Vul per betaalmethode het huidige tarief in door in de tabel op de streep te klikken.</div>`:''}
+    <label class="chk"><input type="checkbox" id="vglRefund" ${S.vergelijkRefund?'checked':''}> Vergelijk Refund rate</label>
+    ${S.vergelijkRefund?`<div class="fld" style="margin-top:6px"><label>Huidig refund tarief</label><input data-f="refundOud" value="${esc(F.refundOud||'')}" placeholder="bijv. € 0,25"></div>`:''}`:''}
+  ${S.docType!=='pos'?`<h3>ECOM</h3><label class="chk"><input type="checkbox" id="ecomOn" ${S.showEcom!==false?'checked':''}> ECOM prijzen tonen</label>
+    <div class="hint">Uitzetten voor een offerte met alleen POS.</div>`:''}
   <h3>Pagina's</h3>`;
   const pageDefs = S.docType==='pos'
     ? [['cover','Voorblad'],['pos','Offerte POS hardware'],['sig','Ondertekening']]
@@ -524,6 +533,10 @@ function renderSidebar(){
   sb.querySelectorAll('input[data-p]').forEach(el=>el.addEventListener('change',()=>{S.pages[el.dataset.p]=el.checked; if(el.dataset.p==='pos'){renderSidebar();} renderPreview();}));
   const vgl=sb.querySelector('#vglOn');
   if(vgl) vgl.addEventListener('change',()=>{ S.vergelijk=vgl.checked; renderSidebar(); renderPreview(); });
+  const vglR=sb.querySelector('#vglRefund');
+  if(vglR) vglR.addEventListener('change',()=>{ S.vergelijkRefund=vglR.checked; renderSidebar(); renderPreview(); });
+  const ecomEl=sb.querySelector('#ecomOn');
+  if(ecomEl) ecomEl.addEventListener('change',()=>{ S.showEcom=ecomEl.checked; renderPreview(); });
   const vglL=sb.querySelector('#vglLabel');
   if(vglL) vglL.addEventListener('input',()=>{ S.vergelijkLabel=vglL.value; renderPreview(); });
   sb.querySelectorAll('input[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; renderPreview(); }));
@@ -571,7 +584,7 @@ function pgCover(){
     </div>
     <div class="meta">
       <div><div class="lbl">${L('Persoonlijk voorstel voor:','Personal proposal for:')}</div><div class="val big" data-bind="bedrijf">${esc(F.bedrijf)}</div>
-        ${isP?`<div class="lbl" style="margin-top:5mm">${L('Gemaakt door:','Created by:')}</div><div class="val" data-bind="auteur">${esc(F.auteur)}</div>`:''}</div>
+        ${F.auteur?`<div class="lbl" style="margin-top:5mm">${L('Gemaakt door:','Prepared by:')}</div><div class="val" data-bind="auteur">${esc(F.auteur)}</div>`:''}</div>
       <div>
         <div class="lbl">${L('Datum voorstel:','Proposal date:')}</div><div class="val" data-bind="datum">${esc(F.datum)}</div>
         ${!isP&&F.geldig?`<div class="lbl" style="margin-top:4mm">${L('Voorstel geldig tot:','Proposal valid until:')}</div><div class="val" data-bind="geldig">${esc(F.geldig)}</div>`:''}
@@ -720,8 +733,9 @@ function pgFinancieel(){
     <div class="finwrap">
       <div>
         <div class="cyansub">${L('Tarieven','Rates')}</div>
-        ${feeItem(L('Transactiekosten','Transaction fee'),'txkosten',L('Deze kosten rekenen wij voor elke online transactie. Dit tarief is reeds verwerkt in de vermelde tarieven per betaalmethode.','We charge this fee for every online transaction. It is already included in the rates listed per payment method.'))}
-        ${feeItem('Refund','refund',L('Deze kosten rekenen wij voor elke refund (creditering) die gedaan wordt.','We charge this fee for every refund (credit) that is processed.'))}
+        ${S.showEcom===false?'':feeItem(L('Transactiekosten','Transaction fee'),'txkosten',L('Deze kosten rekenen wij voor elke online transactie. Dit tarief is reeds verwerkt in de vermelde tarieven per betaalmethode.','We charge this fee for every online transaction. It is already included in the rates listed per payment method.'))}
+        ${(S.docType==='merchant'&&S.vergelijkRefund)?`<div class="feeitem"><div class="top"><span>Refund (${L('huidig','current')})</span><span class="amt" contenteditable data-fee="refundOud">${esc(S.fields.refundOud||'—')}</span></div></div>`:''}
+        ${feeItem((S.docType==='merchant'&&S.vergelijkRefund)?'Refund ('+L('nieuw','new')+')':'Refund','refund',L('Deze kosten rekenen wij voor elke refund (creditering) die gedaan wordt.','We charge this fee for every refund (credit) that is processed.'))}
         ${feeItem(L('Uitbetalen (per batch)','Payout (per batch)'),'payout',L('Deze kosten rekenen wij voor elke uitbetaling van het saldo. U kunt zelf aangeven hoe vaak en op welke dagen u automatisch uitbetaald wenst te worden.','We charge this fee for every payout of your balance. You decide how often and on which days you want to be paid out automatically.'))}
         ${feeItem('VIBAN Solution','viban',L('Deze kosten rekenen wij voor elke VIBAN-transactie. Dit wordt standaard opgeteld bij de bestaande kosten (SEPA Direct Debit, Bank transfer, Refunds).','We charge this fee for every VIBAN transaction. It is added by default to the existing fees (SEPA Direct Debit, Bank transfer, Refunds).'))}
       </div>
@@ -921,12 +935,14 @@ function pgPos(){
   if(S.docType==='pos') return pgPosOnly();
   const P=S.pos;
   let hw='';
+  const disc=(parseFloat(S.poskorting)||0)>0 || P.hw.some(r=>r.on!==false && r.man!=null && r.man!=='');
   P.hw.forEach((r,i)=>{
     if(r.on===false) return;
     const t=hwTarief(r);
     hw+=`<tr class="m"><td class="ic">${TERM_SVG}</td><td class="nm" contenteditable data-pos="hw.${i}.name">${esc(r.name)}${r.nieuw?'<span class="nieuw">Nieuw</span>':''}</td>`+
-        `<td class="pr2 posval${posGray(r.def)}" contenteditable data-pos="hw.${i}.def">${esc(r.def)}</td>`+
-        `<td class="pr2 posval${posGray(t)}" contenteditable data-posman="${i}">${esc(t)}</td></tr>`;
+        (disc?`<td class="pr2 posval${posGray(r.def)}" contenteditable data-pos="hw.${i}.def">${esc(r.def)}</td>`+
+        `<td class="pr2 posval${posGray(t)}" contenteditable data-posman="${i}">${esc(t)}</td></tr>`
+        :`<td class="pr2"></td><td class="pr2 posval${posGray(r.def)}" contenteditable data-pos="hw.${i}.def">${esc(r.def)}</td></tr>`);
   });
   let mo='';
   P.mo.forEach((r,i)=>{
@@ -948,7 +964,7 @@ function pgPos(){
     <p class="lead" style="margin-bottom:3mm" contenteditable>${L('Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.','Rates in this proposal are stated in Euro (\u20ac) and exclude VAT. The products and services below are made available by MultiSafepay to the partner to offer to its affiliates.')}</p>
     <h3 class="posh" style="margin-top:0" contenteditable>POS Hardware</h3>
     <table class="ptable pos">${POSCOLS}<tbody>
-      ${posHead('HARDWARE',L('Tarief default','Default rate'),L('Tarief ','Rate ')+bedrijf)}
+      ${disc?posHead('HARDWARE',L('Tarief default','Default rate'),L('Tarief ','Rate ')+bedrijf):posHead('HARDWARE','',L('Tarief','Rate'))}
       ${hw}
     </tbody></table>
     <table class="ptable pos">${POSCOLS}<tbody>
@@ -1013,7 +1029,7 @@ function renderPreview(){
   if(S.pages.benefits) h+=pgBenefits();
   if(S.docType==='partner' && S.pages.agreement) h+=pgAgreement();
   if(S.pages.financieel) h+=pgFinancieel();
-  if(S.pages.tabel) h+=pgTabel();
+  if(S.pages.tabel && S.showEcom!==false) h+=pgTabel();
   if(S.pages.pos) h+=pgPos();
   if(S.docType==='merchant' && S.pages.agreement) h+=pgAgreement();
   if(S.pages.sig) h+=pgSig();
