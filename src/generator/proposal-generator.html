@@ -425,6 +425,7 @@ function defaultState(dt, lang){
     pos: posDefaults(lg),
     vergelijkRefund: false,
     showEcom: true,
+    icpp: false,
     vergelijk: false,   // merchant: toon kolom met huidige tarieven
     vergelijkLabel: en?'Current rate':'Huidig tarief',
     oud: {},            // row index -> huidig tarief
@@ -489,7 +490,9 @@ function renderSidebar(){
     <label class="chk"><input type="checkbox" id="vglRefund" ${S.vergelijkRefund?'checked':''}> Vergelijk Refund rate</label>
     ${S.vergelijkRefund?`<div class="fld" style="margin-top:6px"><label>Huidig refund tarief</label><input data-f="refundOud" value="${esc(F.refundOud||'')}" placeholder="bijv. € 0,25"></div>`:''}`:''}
   ${S.docType!=='pos'?`<h3>ECOM</h3><label class="chk"><input type="checkbox" id="ecomOn" ${S.showEcom!==false?'checked':''}> ECOM prijzen tonen</label>
-    <div class="hint">Uitzetten voor een offerte met alleen POS.</div>`:''}
+    <div class="hint">Uitzetten voor een offerte met alleen POS.</div>
+    <h3>Interchange ++</h3><label class="chk"><input type="checkbox" id="icppOn" ${S.icpp?'checked':''}> IC++ tarieven (creditcards)</label>
+    <div class="hint">Zet IC++ achter de tarieven van Visa, Mastercard, Maestro en Cartes Bancaires (ECOM) en van niet-binnenlandse debitcards en creditcards zonder Amex (POS).</div>`:''}
   <h3>Pagina's</h3>`;
   const pageDefs = S.docType==='pos'
     ? [['cover','Voorblad'],['pos','Offerte POS hardware'],['sig','Ondertekening']]
@@ -535,6 +538,8 @@ function renderSidebar(){
   if(vgl) vgl.addEventListener('change',()=>{ S.vergelijk=vgl.checked; renderSidebar(); renderPreview(); });
   const vglR=sb.querySelector('#vglRefund');
   if(vglR) vglR.addEventListener('change',()=>{ S.vergelijkRefund=vglR.checked; renderSidebar(); renderPreview(); });
+  const icEl=sb.querySelector('#icppOn');
+  if(icEl) icEl.addEventListener('change',()=>{ S.icpp=icEl.checked; renderPreview(); });
   const ecomEl=sb.querySelector('#ecomOn');
   if(ecomEl) ecomEl.addEventListener('change',()=>{ S.showEcom=ecomEl.checked; if(!ecomEl.checked && S.docType!=='pos'){ S.pages.pos=true; renderSidebar(); } renderPreview(); });
   const vglL=sb.querySelector('#vglLabel');
@@ -775,7 +780,7 @@ function pgTabel(){
       const oud=(S.oud||{})[i]||'';
       b+=`<tr class="m"><td class="ic"><img src="${A[r.key]||''}" onerror="this.style.display='none'"></td><td class="nm" contenteditable>${esc(r.name)}</td>`+
          (cmp?`<td class="pr old${oud?'':' poa'}" contenteditable data-oud="${i}">${esc(oud||'\u2014')}</td>`:'')+
-         `<td class="pr ${poa?'poa':''}" contenteditable data-price="${i}">${esc((r.key==='applepay'||r.key==='googlepay')?r.price:composePrice(r.price))}</td></tr>`;
+         `<td class="pr ${poa?'poa':''}" contenteditable data-price="${i}">${esc(ecomDisp(r))}</td></tr>`;
     }
     bodies+=`<tbody class="grp">${b}</tbody>`;
   }
@@ -784,6 +789,7 @@ function pgTabel(){
     ${isP?`<h2 class="sec" contenteditable>${L('Tarief overzicht ECOM transacties','Rate overview ECOM transactions')}</h2>
     <p class="lead" contenteditable>${L('Tarieven in dit voorstel worden vermeld in Euro (\u20ac) en zijn exclusief BTW. Onderstaande producten en diensten worden door MultiSafepay beschikbaar gesteld aan de partner om bij affiliates aan te bieden.','Rates in this proposal are stated in Euro (\u20ac) and exclude VAT. The products and services below are made available by MultiSafepay to the partner to offer to its affiliates.')}</p>`:''}
     <table class="ptable">${theadHtml}${bodies}</table>
+    ${icNote()}
     <div class="smallnote" contenteditable>${L('Indien het huidig aantal transacties en de daarbij behorende transactiewaarde aanzienlijk onder het geschatte gemiddelde ligt, of indien meer dan 10% van het totaal van de transacties afkomstig is van buiten de EU en/of via Business/Company creditcards verwerkt wordt, dan behoudt MultiSafepay zich het recht voor om deze kosten aan te passen.','If the current number of transactions and the related transaction value are significantly below the estimated average, or if more than 10% of all transactions originate from outside the EU and/or are processed via business/company credit cards, MultiSafepay reserves the right to adjust these fees.')}</div>
     ${foot()}
   </div></div>`;
@@ -836,6 +842,12 @@ function parsePrice(s){
   const v=parseFloat(m);
   return isNaN(v)?null:v;
 }
+const ICPP_ECOM=['visa','mastercard','maestro','cartesbancaires'];
+function icStrip(v){ return String(v==null?'':v).replace(/\s*IC\+\+\s*$/i,''); }
+function icSfx(v, eligible){ const b=icStrip(v); return (eligible && S.icpp && S.docType!=='pos' && /%/.test(b) && !RX_POA.test(b) && !RX_PH.test(b)) ? b+' IC++' : b; }
+function icPosOk(key, r){ return key==='nondom' || (key==='credit' && r.k!=='amex'); }
+function ecomDisp(r){ return (r.key==='applepay'||r.key==='googlepay')?r.price:icSfx(composePrice(r.price), ICPP_ECOM.includes(r.key)); }
+function icNote(){ return S.icpp?`<div class="smallnote" contenteditable>${L('IC++ (Interchange++): naast het vermelde tarief worden de interchange- en schemekosten van de kaartmaatschappijen tegen kostprijs doorberekend.','IC++ (Interchange++): in addition to the stated rate, the interchange and scheme fees of the card schemes are passed through at cost.')}</div>`:''; }
 function composePrice(raw){
   const tx=parsePrice(S.fields.txkosten);
   if(!raw || /aanvraag|all-?incl/i.test(raw) || !tx || tx<=0) return raw;
@@ -861,6 +873,7 @@ function hwTarief(row){
 function posSync(path, val){
   const m=path.match(/^(nondom|credit)\.(\d+)\.val$/);
   if(!m) return;
+  val=icStrip(val);
   const from=m[1], i=+m[2], row=S.pos[from][i];
   if(!row || (row.k!=='visa' && row.k!=='mastercard')) return;
   ['nondom','credit'].forEach(list=>{
@@ -868,7 +881,7 @@ function posSync(path, val){
       if((r.k==='visa'||r.k==='mastercard') && !(list===from && j===i)){
         r.val=val;
         const oEl=document.querySelector(`#preview [data-pos="${list}.${j}.val"]`);
-        if(oEl && oEl!==document.activeElement){ oEl.textContent=val; oEl.classList.toggle('poa', RX_PH.test(val)); }
+        if(oEl && oEl!==document.activeElement){ oEl.textContent=icSfx(val, icPosOk(list,r)); oEl.classList.toggle('poa', RX_PH.test(val)); }
       }
     });
   });
@@ -956,7 +969,7 @@ function pgPos(){
   });
   const payRows=(list,key,icon)=>list.map((r,i)=>
     `<tr class="m"><td class="ic">${icon==='flag'?FLAGS[r.fl]:`<img src="${A[r.k]||''}">`}</td><td class="nm" contenteditable data-pos="${key}.${i}.name">${esc(r.name)}</td><td class="pr2"></td>`+
-    `<td class="pr2 posval${posGray(r.val)}" contenteditable data-pos="${key}.${i}.val">${esc(r.val)}</td></tr>`).join('');
+    `<td class="pr2 posval${posGray(r.val)}" contenteditable data-pos="${key}.${i}.val">${esc(icSfx(r.val, icPosOk(key,r)))}</td></tr>`).join('');
   const bedrijf=esc(S.fields.bedrijf||'');
   return `<div class="page pospage"><div class="pad">
     ${logoBlock()}
@@ -990,6 +1003,7 @@ function pgPos(){
       ${posHead('CREDIT CARDS','',L('Tarief','Rate'))}
       ${payRows(P.credit,'credit','card')}
     </tbody></table>
+    ${icNote()}
     ${foot()}
   </div></div>`;
 }
@@ -1050,12 +1064,12 @@ function renderPreview(){
   function syncCard(el, valOverride){
     const i=+el.dataset.price, r=S.rows[i];
     if(!r || !SYNC.includes(r.key)) return;
-    const val=(valOverride!==undefined)?valOverride:el.textContent.trim();
+    const val=icStrip((valOverride!==undefined)?valOverride:el.textContent.trim());
     S.rows.forEach((x,xi)=>{
       if(xi!==i && SYNC.includes(x.key)){
         x.price=val;
         const oEl=pv.querySelector(`[data-price="${xi}"]`);
-        if(oEl && oEl!==el && oEl!==document.activeElement){ oEl.textContent=composePrice(val); oEl.classList.toggle('poa',RX_POA.test(val)); }
+        if(oEl && oEl!==el && oEl!==document.activeElement){ oEl.textContent=ecomDisp(x); oEl.classList.toggle('poa',RX_POA.test(val)); }
       }
     });
   }
@@ -1076,11 +1090,11 @@ function renderPreview(){
     el.addEventListener('focus',()=>{ const i=+el.dataset.price; const raw=S.rows[i].price;
       el.textContent=RX_POA.test(raw)?'':raw; });
     el.addEventListener('blur',()=>{ const i=+el.dataset.price;
-      let v=el.textContent.trim(); if(v==='') v=POA();
+      let v=icStrip(el.textContent.trim()); if(v==='') v=POA();
       else v=v.split('+').map(p=>{ p=p.trim(); return (/^\d/.test(p) && !/%/.test(p) && !/^€/.test(p)) ? '€ '+p : p; }).join(' + ');
       S.rows[i].price=v;
       el.classList.toggle('poa', RX_POA.test(v)); syncCard(el, v);
-      const rr=S.rows[i]; el.textContent=(rr.key==='applepay'||rr.key==='googlepay')?rr.price:composePrice(rr.price); });
+      const rr=S.rows[i]; el.textContent=ecomDisp(rr); });
     el.addEventListener('input',()=>{ el.classList.toggle('poa', RX_POA.test(el.textContent)); syncCard(el); });
   });
   // POS cell bindings (persist edits across re-renders)
@@ -1097,7 +1111,9 @@ function renderPreview(){
     el.addEventListener('blur',()=>{
       let v=el.dataset.pos.endsWith('.name')?el.textContent.replace(/Nieuw$/,'').trim():el.textContent.trim();
       if(isVal && v===''){ v=NVT(); el.textContent=v; el.classList.add('poa'); }
-      else if(isVal){ const f=euroFmt(v); if(f!==v){ v=f; el.textContent=v; }
+      else if(isVal){ v=icStrip(v); const f=euroFmt(v); if(f!==v) v=f;
+        const pm=el.dataset.pos.match(/^(nondom|credit)\.(\d+)\.val$/);
+        el.textContent=pm?icSfx(v, icPosOk(pm[1], S.pos[pm[1]][+pm[2]])):v;
         el.classList.toggle('poa', RX_PH.test(v)); }
       setPosPath(el.dataset.pos, v);
       if(el.dataset.pos.endsWith('.val')) posSync(el.dataset.pos, v);
