@@ -10,6 +10,7 @@ export type Access = {
   email: string;
   status: MemberStatus;
   isOwner: boolean;
+  fullName: string | null;
 };
 
 export type Member = Access & { createdAt: string; updatedAt: string };
@@ -27,7 +28,7 @@ export const getMyAccess = createServerFn({ method: "POST" })
 
     const { data: existing } = await supabaseAdmin
       .from("team_members")
-      .select("user_id, email, status, is_owner")
+      .select("user_id, email, status, is_owner, full_name")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -37,6 +38,7 @@ export const getMyAccess = createServerFn({ method: "POST" })
         email: existing.email,
         status: existing.status as MemberStatus,
         isOwner: existing.is_owner,
+        fullName: existing.full_name ?? null,
       };
     }
 
@@ -55,7 +57,7 @@ export const getMyAccess = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("team_members").insert(row);
     if (error && error.code !== "23505") throw new Error("Kon lidmaatschap niet vastleggen");
 
-    return { userId, email, status: row.status, isOwner: row.is_owner };
+    return { userId, email, status: row.status, isOwner: row.is_owner, fullName: null };
   });
 
 async function assertOwner(userId: string) {
@@ -75,7 +77,7 @@ export const listTeam = createServerFn({ method: "POST" })
     const supabaseAdmin = await assertOwner(context.userId);
     const { data, error } = await supabaseAdmin
       .from("team_members")
-      .select("user_id, email, status, is_owner, created_at, updated_at")
+      .select("user_id, email, status, is_owner, full_name, created_at, updated_at")
       .order("created_at", { ascending: true });
     if (error) throw new Error("Kon teamleden niet laden");
     return (data ?? []).map((m) => ({
@@ -83,6 +85,7 @@ export const listTeam = createServerFn({ method: "POST" })
       email: m.email,
       status: m.status as MemberStatus,
       isOwner: m.is_owner,
+      fullName: m.full_name ?? null,
       createdAt: m.created_at,
       updatedAt: m.updated_at,
     }));
@@ -154,5 +157,20 @@ export const transferOwnership = createServerFn({ method: "POST" })
         .eq("user_id", context.userId);
       throw new Error("Overdracht mislukt");
     }
+    return { ok: true };
+  });
+
+export const setMyFullName = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { fullName: string }) =>
+    z.object({ fullName: z.string().trim().min(2).max(100) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("team_members")
+      .update({ full_name: data.fullName })
+      .eq("user_id", context.userId);
+    if (error) throw new Error("Opslaan mislukt");
     return { ok: true };
   });

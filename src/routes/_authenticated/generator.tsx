@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 
 import { getGeneratorHtml } from "@/lib/generator.functions";
+import type { Access } from "@/lib/team.functions";
 import {
   deleteMyProposal,
   getMyProposal,
@@ -124,6 +125,11 @@ function GeneratorPage() {
           title="MSP Proposal Generator"
           className="h-full w-full border-0"
           onLoad={() => {
+            const access = queryClient.getQueryData<Access>(["access"]);
+            frameRef.current?.contentWindow?.postMessage(
+              { __mspProfile: { name: access?.fullName ?? "" } },
+              "*",
+            );
             if (!openId) return;
             window.setTimeout(() => {
               frameRef.current?.contentWindow?.postMessage({ __mspOpen: openId }, "*");
