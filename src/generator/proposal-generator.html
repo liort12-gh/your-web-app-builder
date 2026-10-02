@@ -871,20 +871,28 @@ function hwTarief(row){
   if(n==null) return row.def;
   return '\u20ac '+(n*(1-k/100)).toFixed(2).replace('.',',');
 }
+const CARD_GRP=['mastercard','visa','maestro','cartesbancaires'];
+function posCardsSet(val, skip){
+  ['nondom','credit'].forEach(list=>S.pos[list].forEach((r,j)=>{
+    if(!icPosOk(list,r) || (skip && skip[0]===list && skip[1]===j)) return;
+    r.val=val;
+    const oEl=document.querySelector(`#preview [data-pos="${list}.${j}.val"]`);
+    if(oEl && oEl!==document.activeElement){ oEl.textContent=icSfx(val, true); oEl.classList.toggle('poa', RX_PH.test(val)); }
+  }));
+}
 function posSync(path, val){
   const m=path.match(/^(nondom|credit)\.(\d+)\.val$/);
   if(!m) return;
   val=icStrip(val);
   const from=m[1], i=+m[2], row=S.pos[from][i];
-  if(!row || (row.k!=='visa' && row.k!=='mastercard')) return;
-  ['nondom','credit'].forEach(list=>{
-    S.pos[list].forEach((r,j)=>{
-      if((r.k==='visa'||r.k==='mastercard') && !(list===from && j===i)){
-        r.val=val;
-        const oEl=document.querySelector(`#preview [data-pos="${list}.${j}.val"]`);
-        if(oEl && oEl!==document.activeElement){ oEl.textContent=icSfx(val, icPosOk(list,r)); oEl.classList.toggle('poa', RX_PH.test(val)); }
-      }
-    });
+  if(!row || !icPosOk(from,row)) return;
+  posCardsSet(val,[from,i]);
+  if(RX_PH.test(val)) return;
+  S.rows.forEach((x,xi)=>{
+    if(!CARD_GRP.includes(x.key)) return;
+    x.price=val;
+    const oEl=document.querySelector(`#preview [data-price="${xi}"]`);
+    if(oEl && oEl!==document.activeElement){ oEl.textContent=ecomDisp(x); oEl.classList.toggle('poa',RX_POA.test(val)); }
   });
 }
 function euroFmt(v){
@@ -1066,6 +1074,7 @@ function renderPreview(){
     const i=+el.dataset.price, r=S.rows[i];
     if(!r || !SYNC.includes(r.key)) return;
     const val=icStrip((valOverride!==undefined)?valOverride:el.textContent.trim());
+    if(valOverride!==undefined && !RX_POA.test(val) && val) posCardsSet(val);
     S.rows.forEach((x,xi)=>{
       if(xi!==i && SYNC.includes(x.key)){
         x.price=val;
