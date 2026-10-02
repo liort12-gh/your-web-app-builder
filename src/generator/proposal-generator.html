@@ -1222,8 +1222,21 @@ document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('clic
   S.lang=to;
   renderAll();
 }));
-document.getElementById('resetBtn').addEventListener('click',()=>{
-  if(!confirm('Alle invoer van dit voorstel resetten?')) return;
+function uiConfirm(msg, okLabel){
+  return new Promise(res=>{
+    const ov=document.createElement('div');
+    ov.setAttribute('style','position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;font-family:inherit');
+    ov.innerHTML='<div role="dialog" aria-modal="true" style="background:#fff;color:#0f172a;border-radius:14px;padding:22px 22px 16px;max-width:400px;width:calc(100% - 32px);box-shadow:0 20px 50px rgba(0,0,0,.25)"><p style="margin:0 0 18px;font-size:14px;line-height:1.5"></p><div style="display:flex;justify-content:flex-end;gap:8px"><button data-a="0" style="padding:8px 14px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font:inherit">Annuleren</button><button data-a="1" style="padding:8px 14px;border-radius:8px;border:0;background:#0f172a;color:#fff;cursor:pointer;font:inherit">'+(okLabel||'Doorgaan')+'</button></div></div>';
+    ov.querySelector('p').textContent=msg;
+    const done=v=>{ ov.remove(); document.removeEventListener('keydown',key); res(v); };
+    const key=e=>{ if(e.key==='Escape') done(false); if(e.key==='Enter') done(true); };
+    ov.addEventListener('click',e=>{ if(e.target===ov) done(false); const b=e.target.closest('button'); if(b) done(b.dataset.a==='1'); });
+    document.addEventListener('keydown',key);
+    document.body.appendChild(ov); ov.querySelector('[data-a="1"]').focus();
+  });
+}
+document.getElementById('resetBtn').addEventListener('click',async ()=>{
+  if(!await uiConfirm('Alle invoer van dit voorstel resetten?','Resetten')) return;
   S=defaultState(S.docType); renderAll();
 });
 const actionMenus=[...document.querySelectorAll('#topbar details.menu')];
@@ -1416,7 +1429,7 @@ async function loadProposal(id){
 async function deleteProposal(){
   if(!CUR){ flash('Niets geopend'); return; }
   const p=SAVED.find(x=>x.id===CUR);
-  if(!confirm('"'+(p?p.name:'Dit voorstel')+'" verwijderen?')) return;
+  if(!await uiConfirm('"'+(p?p.name:'Dit voorstel')+'" verwijderen?','Verwijderen')) return;
   try{
     if(REMOTE){ await host('delete',{id:CUR}); } else { lsDel(CUR); }
     CUR=null; await refreshSaved(); flash('Verwijderd', true);
@@ -1425,8 +1438,8 @@ async function deleteProposal(){
 document.getElementById('saveBtn').addEventListener('click',()=>saveProposal(false));
 document.getElementById('saveAsBtn').addEventListener('click',()=>saveProposal(true));
 document.getElementById('delBtn').addEventListener('click',deleteProposal);
-document.getElementById('newBtn').addEventListener('click',()=>{
-  if(!confirm('Nieuw voorstel starten met de standaardinstellingen? Niet-opgeslagen wijzigingen gaan verloren.')) return;
+document.getElementById('newBtn').addEventListener('click',async ()=>{
+  if(!await uiConfirm('Nieuw voorstel starten met de standaardinstellingen? Niet-opgeslagen wijzigingen gaan verloren.','Nieuw voorstel')) return;
   S=defaultState(S.docType, S.lang); CUR=null;
   const sel=document.getElementById('savedSel'); if(sel) sel.value='';
   renderAll(); flash('Nieuw voorstel', true);
