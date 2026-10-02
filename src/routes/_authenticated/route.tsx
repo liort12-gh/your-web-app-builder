@@ -3,7 +3,9 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/
 import { useServerFn } from "@tanstack/react-start";
 
 import { supabase } from "@/integrations/supabase/client";
-import { getMyAccess } from "@/lib/team.functions";
+import { useState } from "react";
+
+import { getMyAccess, setMyFullName } from "@/lib/team.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -47,7 +49,7 @@ function AuthenticatedLayout() {
 
   return (
     <Shell isOwner={data.isOwner} email={data.email}>
-      <Outlet />
+      {!data.fullName ? <NameDialog /> : <Outlet />}
     </Shell>
   );
 }
@@ -98,6 +100,58 @@ function Shell({
         </div>
       </header>
       <div className="flex-1 p-5">{children}</div>
+    </div>
+  );
+}
+
+function NameDialog() {
+  const save = useServerFn(setMyFullName);
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (name.trim().length < 2) return setErr("Vul je volledige naam in");
+    setBusy(true);
+    setErr("");
+    try {
+      await save({ data: { fullName: name.trim() } });
+      await queryClient.invalidateQueries({ queryKey: ["access"] });
+    } catch {
+      setErr("Opslaan mislukt, probeer opnieuw");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-lg"
+      >
+        <h2 className="text-base font-semibold text-card-foreground">Wat is je volledige naam?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Je naam komt standaard bij "Gemaakt door" in nieuwe voorstellen.
+        </p>
+        <input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Voornaam Achternaam"
+          maxLength={100}
+          className="mt-4 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+        />
+        {err && <p className="mt-2 text-xs text-destructive">{err}</p>}
+        <button
+          type="submit"
+          disabled={busy}
+          className="mt-4 w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        >
+          {busy ? "Opslaan…" : "Opslaan"}
+        </button>
+      </form>
     </div>
   );
 }

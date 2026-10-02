@@ -1427,8 +1427,7 @@ document.getElementById('saveAsBtn').addEventListener('click',()=>saveProposal(t
 document.getElementById('delBtn').addEventListener('click',deleteProposal);
 document.getElementById('newBtn').addEventListener('click',()=>{
   if(!confirm('Nieuw voorstel starten met de standaardinstellingen? Niet-opgeslagen wijzigingen gaan verloren.')) return;
-  const dt=confirm('Merchant-voorstel? (OK = Merchant, Annuleren = Partner)')?'merchant':'partner';
-  S=defaultState(dt, S.lang); CUR=null;
+  S=defaultState(S.docType, S.lang); CUR=null;
   const sel=document.getElementById('savedSel'); if(sel) sel.value='';
   renderAll(); flash('Nieuw voorstel', true);
 });
