@@ -74,6 +74,7 @@ function TeamPage() {
           >
             <div className="min-w-0">
               <h2 className="truncate text-sm font-semibold text-card-foreground">
+                {member.fullName ? `${member.fullName} · ` : ""}
                 {member.email || "onbekend e-mailadres"}
                 {member.isOwner && (
                   <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
