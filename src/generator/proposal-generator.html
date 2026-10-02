@@ -872,6 +872,12 @@ function hwTarief(row){
   return '\u20ac '+(n*(1-k/100)).toFixed(2).replace('.',',');
 }
 const CARD_GRP=['mastercard','visa','maestro','cartesbancaires'];
+function cardRealVal(v){ v=icStrip(v).trim(); return (v && !RX_POA.test(v) && !RX_PH.test(v)) ? v : ''; }
+function linkedRate(){
+  for(const x of S.rows){ if(CARD_GRP.includes(x.key)){ const v=cardRealVal(x.price); if(v) return v; } }
+  for(const list of ['nondom','credit']) for(const r of (S.pos&&S.pos[list])||[]){ if(icPosOk(list,r)){ const v=cardRealVal(r.val); if(v) return v; } }
+  return '';
+}
 function posCardsSet(val, skip){
   ['nondom','credit'].forEach(list=>S.pos[list].forEach((r,j)=>{
     if(!icPosOk(list,r) || (skip && skip[0]===list && skip[1]===j)) return;
@@ -1097,15 +1103,18 @@ function renderPreview(){
     S.vergelijkLabel=el.textContent.trim()||L('Huidig tarief','Current rate'); renderSidebar();
   }));
   pv.querySelectorAll('[data-price]').forEach(el=>{
-    el.addEventListener('focus',()=>{ const i=+el.dataset.price; const raw=S.rows[i].price;
-      el.textContent=RX_POA.test(raw)?'':raw; });
-    el.addEventListener('blur',()=>{ const i=+el.dataset.price;
-      let v=icStrip(el.textContent.trim()); if(v==='') v=POA();
+    el.addEventListener('focus',()=>{ const i=+el.dataset.price; const r=S.rows[i]; let raw=r.price;
+      if(SYNC.includes(r.key) && !cardRealVal(raw)){ const lv=linkedRate(); if(lv) raw=lv; }
+      el.textContent=RX_POA.test(raw)?'':icStrip(raw); });
+    el.addEventListener('blur',()=>{ const i=+el.dataset.price; const isSync=SYNC.includes(S.rows[i].key);
+      let v=icStrip(el.textContent.trim());
+      if(v==='' && isSync){ const lv=linkedRate(); if(lv) v=lv; else { S.rows[i].price=POA(); el.classList.add('poa'); el.textContent=ecomDisp(S.rows[i]); return; } }
+      if(v==='') v=POA();
       else v=v.split('+').map(p=>{ p=p.trim(); return (/^\d/.test(p) && !/%/.test(p) && !/^€/.test(p)) ? '€ '+p : p; }).join(' + ');
       S.rows[i].price=v;
-      el.classList.toggle('poa', RX_POA.test(v)); syncCard(el, v);
+      el.classList.toggle('poa', RX_POA.test(v)); if(!isSync || cardRealVal(v)) syncCard(el, v);
       const rr=S.rows[i]; el.textContent=ecomDisp(rr); });
-    el.addEventListener('input',()=>{ el.classList.toggle('poa', RX_POA.test(el.textContent)); syncCard(el); });
+    el.addEventListener('input',()=>{ el.classList.toggle('poa', RX_POA.test(el.textContent)); if(cardRealVal(el.textContent)) syncCard(el); });
   });
   // POS cell bindings (persist edits across re-renders)
   function setPosPath(path, val){
@@ -1117,10 +1126,14 @@ function renderPreview(){
   const PH=/^(n\.v\.t\.?|n\/a|prijs op aanvraag|price on request)$/i;
   pv.querySelectorAll('[data-pos]').forEach(el=>{
     const isVal = el.dataset.pos.endsWith('.val') || el.dataset.pos.endsWith('.def');
-    if(isVal) el.addEventListener('focus',()=>{ if(PH.test(el.textContent.trim())) el.textContent=''; });
+    const pmL=el.dataset.pos.match(/^(nondom|credit)\.(\d+)\.val$/);
+    const linked=()=>pmL && S.pos[pmL[1]][+pmL[2]] && icPosOk(pmL[1], S.pos[pmL[1]][+pmL[2]]);
+    if(isVal) el.addEventListener('focus',()=>{ const t=el.textContent.trim();
+      if(PH.test(t) || t===''){ const lv=linked()?linkedRate():''; el.textContent=lv||''; } else if(pmL) el.textContent=icStrip(t); });
     el.addEventListener('blur',()=>{
       let v=el.dataset.pos.endsWith('.name')?el.textContent.replace(/Nieuw$/,'').trim():el.textContent.trim();
-      if(isVal && v===''){ v=NVT(); el.textContent=v; el.classList.add('poa'); }
+      if(isVal && v==='' && linked()){ const lv=linkedRate(); if(lv) v=lv; }
+      if(isVal && v===''){ v=NVT(); el.textContent=v; el.classList.add('poa'); setPosPath(el.dataset.pos, v); return; }
       else if(isVal){ v=icStrip(v); const f=euroFmt(v); if(f!==v) v=f;
         const pm=el.dataset.pos.match(/^(nondom|credit)\.(\d+)\.val$/);
         el.textContent=pm?icSfx(v, icPosOk(pm[1], S.pos[pm[1]][+pm[2]])):v;
