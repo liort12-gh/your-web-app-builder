@@ -545,10 +545,10 @@ function renderSidebar(){
   const vglL=sb.querySelector('#vglLabel');
   if(vglL) vglL.addEventListener('input',()=>{ S.vergelijkLabel=vglL.value; renderPreview(); });
   sb.querySelectorAll('input[data-hw]').forEach(el=>el.addEventListener('change',()=>{ S.pos.hw[el.dataset.hw].on=el.checked; renderPreview(); }));
-  sb.querySelectorAll('input[data-r]').forEach(el=>el.addEventListener('change',()=>{S.rows[el.dataset.r].on=el.checked; syncCatBoxes(); renderPreview();}));
+  sb.querySelectorAll('input[data-r]').forEach(el=>el.addEventListener('change',()=>{S.rows[el.dataset.r].on=el.checked; cbMatch(); syncCatBoxes(); renderPreview();}));
   sb.querySelectorAll('input[data-cat]').forEach(el=>{
     el.addEventListener('change',()=>{
-      S.rows.forEach(r=>{ if(r.cat===el.dataset.cat) r.on=el.checked; });
+      S.rows.forEach(r=>{ if(r.cat===el.dataset.cat) r.on=el.checked; }); cbMatch();
       sb.querySelectorAll('input[data-r]').forEach(rc=>{ rc.checked=S.rows[rc.dataset.r].on; });
       syncCatBoxes(); renderPreview();
     });
@@ -842,6 +842,7 @@ function parsePrice(s){
   const v=parseFloat(m);
   return isNaN(v)?null:v;
 }
+function cbMatch(){ const v=S.rows.find(r=>r.key==='visa'); if(!v) return; S.rows.forEach(r=>{ if(r.key==='cartesbancaires' && r.on!==false) r.price=v.price; }); }
 const ICPP_ECOM=['visa','mastercard','maestro','cartesbancaires'];
 function icStrip(v){ return String(v==null?'':v).replace(/\s*IC\+\+\s*$/i,''); }
 function icSfx(v, eligible){ const b=icStrip(v); return (eligible && S.icpp && S.docType!=='pos' && /%/.test(b) && !RX_POA.test(b) && !RX_PH.test(b)) ? b+' IC++' : b; }
@@ -1060,7 +1061,7 @@ function renderPreview(){
   // page numbers
   pv.querySelectorAll('.page').forEach((p,i)=>{ const pn=p.querySelector('.pn'); if(pn) pn.textContent=L('Paginanummer: ','Page: ')+(i+1); });
   // bindings: price edits (Mastercard <-> Visa <-> Maestro stay identical)
-  const SYNC=['mastercard','visa','maestro'];
+  const SYNC=['mastercard','visa','maestro','cartesbancaires'];
   function syncCard(el, valOverride){
     const i=+el.dataset.price, r=S.rows[i];
     if(!r || !SYNC.includes(r.key)) return;
