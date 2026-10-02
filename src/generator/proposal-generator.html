@@ -291,6 +291,7 @@ html,body,*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
           <div class="menu-pop">
             <div class="menu-label">Voorstel</div>
             <button class="btn" id="saveAsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>Dupliceer</button>
+            <button class="btn" id="newBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15h6"/></svg>Nieuw voorstel</button>
             <button class="btn" id="resetBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset invoer</button>
             <button class="btn danger" id="delBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v5M14 11v5"/></svg>Verwijder voorstel</button>
           </div>
@@ -415,7 +416,7 @@ function defaultState(dt, lang){
     lang: lg,
     docType: dt||'merchant',
     fields:{
-      bedrijf:en?'[Company name]':'[Bedrijfsnaam]', datum:today, geldig:'', periode:en?'24 months':'24 maanden', auteur:'Lior Tacq',
+      bedrijf:en?'[Company name]':'[Bedrijfsnaam]', datum:today, geldig:'', periode:en?'24 months':'24 maanden', auteur:(window.__MSP_NAME||''),
       txkosten:'€ 0,10', refund:'€ 0,19', payout:'€ 0,50', viban:'€ 0,02',
       retrieval:'€ 5,00', chargeback:'€ 25,00', reversal:'€ 1,00', moi:'€ 60,00',
       notes:''
@@ -1285,6 +1286,7 @@ function host(op,payload){
 }
 window.addEventListener('message',ev=>{
   const d=ev.data;
+  if(d && d.__mspProfile){ window.__MSP_NAME=d.__mspProfile.name||''; if(CUR===null && !S.fields.auteur){ S.fields.auteur=window.__MSP_NAME; renderAll(); } return; }
   if(d && d.__mspOpen){ loadProposal(d.__mspOpen); return; }
   if(!d || !d.__mspReply) return;
   const p=RPC[d.id]; if(!p) return; delete RPC[d.id];
@@ -1423,6 +1425,13 @@ async function deleteProposal(){
 document.getElementById('saveBtn').addEventListener('click',()=>saveProposal(false));
 document.getElementById('saveAsBtn').addEventListener('click',()=>saveProposal(true));
 document.getElementById('delBtn').addEventListener('click',deleteProposal);
+document.getElementById('newBtn').addEventListener('click',()=>{
+  if(!confirm('Nieuw voorstel starten met de standaardinstellingen? Niet-opgeslagen wijzigingen gaan verloren.')) return;
+  const dt=confirm('Merchant-voorstel? (OK = Merchant, Annuleren = Partner)')?'merchant':'partner';
+  S=defaultState(dt, S.lang); CUR=null;
+  const sel=document.getElementById('savedSel'); if(sel) sel.value='';
+  renderAll(); flash('Nieuw voorstel', true);
+});
 document.getElementById('savedSel').addEventListener('change',e=>loadProposal(e.target.value));
 window.addEventListener('beforeunload', e=>{ if(CUR===null && S.fields.bedrijf && S.fields.bedrijf!=='[Bedrijfsnaam]'){ e.preventDefault(); e.returnValue=''; } });
 
