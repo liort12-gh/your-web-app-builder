@@ -845,8 +845,8 @@ function parsePrice(s){
   const v=parseFloat(m);
   return isNaN(v)?null:v;
 }
-function cbMatch(){ const v=S.rows.find(r=>r.key==='visa'); if(!v) return; S.rows.forEach(r=>{ if(r.key==='cartesbancaires' && r.on!==false) r.price=v.price; }); }
-const ICPP_ECOM=['visa','mastercard','maestro','cartesbancaires'];
+function cbMatch(){ const v=S.rows.find(r=>r.key==='visa'); if(!v) return; S.rows.forEach(r=>{ if(['cartesbancaires','dankort','postepay'].includes(r.key) && r.on!==false) r.price=v.price; }); }
+const ICPP_ECOM=['visa','mastercard','maestro','cartesbancaires','dankort','postepay'];
 function icStrip(v){ return String(v==null?'':v).replace(/\s*IC\+\+\s*$/i,''); }
 function icSfx(v, eligible){ const b=icStrip(v); return (eligible && S.icpp && S.docType!=='pos' && /%/.test(b) && !RX_POA.test(b) && !RX_PH.test(b)) ? b+' IC++' : b; }
 function icPosOk(key, r){ return key==='nondom' || (key==='credit' && r.k!=='amex'); }
@@ -874,7 +874,7 @@ function hwTarief(row){
   if(n==null) return row.def;
   return '\u20ac '+(n*(1-k/100)).toFixed(2).replace('.',',');
 }
-const CARD_GRP=['mastercard','visa','maestro','cartesbancaires'];
+const CARD_GRP=['mastercard','visa','maestro','cartesbancaires','dankort','postepay'];
 function cardRealVal(v){ v=icStrip(v).trim(); return (v && !RX_POA.test(v) && !RX_PH.test(v)) ? v : ''; }
 function linkedRate(){
   for(const x of S.rows){ if(CARD_GRP.includes(x.key)){ const v=cardRealVal(x.price); if(v) return v; } }
@@ -1078,7 +1078,7 @@ function renderPreview(){
   // page numbers
   pv.querySelectorAll('.page').forEach((p,i)=>{ const pn=p.querySelector('.pn'); if(pn) pn.textContent=L('Paginanummer: ','Page: ')+(i+1); });
   // bindings: price edits (Mastercard <-> Visa <-> Maestro stay identical)
-  const SYNC=['mastercard','visa','maestro','cartesbancaires'];
+  const SYNC=['mastercard','visa','maestro','cartesbancaires','dankort','postepay'];
   function syncCard(el, valOverride){
     const i=+el.dataset.price, r=S.rows[i];
     if(!r || !SYNC.includes(r.key)) return;
