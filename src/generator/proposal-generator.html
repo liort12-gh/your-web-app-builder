@@ -846,7 +846,7 @@ function parsePrice(s){
   return isNaN(v)?null:v;
 }
 function cbMatch(){ const v=S.rows.find(r=>r.key==='visa'); if(!v) return; S.rows.forEach(r=>{ if(['cartesbancaires','dankort','postepay'].includes(r.key) && r.on!==false) r.price=v.price; }); }
-const ICPP_ECOM=['visa','mastercard','maestro','cartesbancaires'];
+const ICPP_ECOM=['visa','mastercard','maestro','cartesbancaires','dankort','postepay'];
 function icStrip(v){ return String(v==null?'':v).replace(/\s*IC\+\+\s*$/i,''); }
 function icSfx(v, eligible){ const b=icStrip(v); return (eligible && S.icpp && S.docType!=='pos' && /%/.test(b) && !RX_POA.test(b) && !RX_PH.test(b)) ? b+' IC++' : b; }
 function icPosOk(key, r){ return key==='nondom' || (key==='credit' && r.k!=='amex'); }
