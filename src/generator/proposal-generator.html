@@ -904,12 +904,13 @@ function posSync(path, val){
     if(oEl && oEl!==document.activeElement){ oEl.textContent=ecomDisp(x); oEl.classList.toggle('poa',RX_POA.test(val)); }
   });
 }
-function euroFmt(v){
+function euroFmt(v,dec){
   const t=String(v).trim();
   if(!t) return t;
   if(/[a-z%]/i.test(t)) return t;
   const n=parseFloat(t.replace(/[\u20ac\s.]/g,'').replace(',','.'));
   if(isNaN(n)) return t;
+  if(dec===3){ const r=Math.round(n*1000)/1000; return '\u20ac '+(Math.round(r*100)===r*100?r.toFixed(2):r.toFixed(3)).replace('.',','); }
   return '\u20ac '+n.toFixed(2).replace('.',',');
 }
 function posNum(x){ const v=parsePrice(x); return v==null?0:v; }
@@ -1137,7 +1138,7 @@ function renderPreview(){
       let v=el.dataset.pos.endsWith('.name')?el.textContent.replace(/Nieuw$/,'').trim():el.textContent.trim();
       if(isVal && v==='' && linked()){ const lv=linkedRate(); if(lv) v=lv; }
       if(isVal && v===''){ v=NVT(); el.textContent=v; el.classList.add('poa'); setPosPath(el.dataset.pos, v); return; }
-      else if(isVal){ v=icStrip(v); const f=euroFmt(v); if(f!==v) v=f;
+      else if(isVal){ v=icStrip(v); const f=euroFmt(v,3); if(f!==v) v=f;
         const pm=el.dataset.pos.match(/^(nondom|credit)\.(\d+)\.val$/);
         el.textContent=pm?icSfx(v, icPosOk(pm[1], S.pos[pm[1]][+pm[2]])):v;
         el.classList.toggle('poa', RX_PH.test(v)); }
