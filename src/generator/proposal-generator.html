@@ -910,7 +910,7 @@ function euroFmt(v,dec){
   if(/[a-z%]/i.test(t)) return t;
   const n=parseFloat(t.replace(/[\u20ac\s.]/g,'').replace(',','.'));
   if(isNaN(n)) return t;
-  if(dec===3){ const r=Math.round(n*1000)/1000; return '\u20ac '+(Math.round(r*100)===r*100?r.toFixed(2):r.toFixed(3)).replace('.',','); }
+  if(dec===3){ const r=Math.round(n*1000)/1000; return '\u20ac '+(Math.abs(Math.round(r*100)-r*100)<1e-6?r.toFixed(2):r.toFixed(3)).replace('.',','); }
   return '\u20ac '+n.toFixed(2).replace('.',',');
 }
 function posNum(x){ const v=parsePrice(x); return v==null?0:v; }
