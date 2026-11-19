@@ -717,14 +717,87 @@ const LEGAL_PARTNER = `
 <h4>Artikel 7: Toepasselijk recht</h4>
 <p>Op deze overeenkomst is Nederlands recht van toepassing. Mogelijke geschillen worden zoveel mogelijk in onderling overleg afgehandeld en daarna, bij voortdurend bestaan van het geschil, voorgelegd aan de bevoegde rechter in de plaats van gedaagde.</p>`;
 
+const LEGAL_MERCHANT_EN = `
+<h4>The undersigned:</h4>
+<ol>
+<li>The private limited liability company MultiSafepay B.V., having its registered office in Amsterdam, hereinafter referred to as MultiSafepay, duly represented for this purpose by Olaf Wouter Geurs; and</li>
+<li>The Stichting inzake MultiSafepay Internet Betalingen, having its registered office in Amsterdam, hereinafter referred to as the Foundation, duly represented for this purpose by Niels Alexander Geurs; and</li>
+<li>The business operator, hereinafter referred to as Merchant.</li>
+</ol>
+<h4>Whereas:</h4>
+<p>A. MultiSafepay offers payment methods and Merchant wishes to use these payment methods. B. The Foundation receives payments from Merchant's customers and transfers these funds belonging to Merchant to Merchant's bank account. C. The parties wish to record their arrangements in writing in an Agreement. D. Merchant has received and read MultiSafepay's General Terms and Conditions, other Agreements and rates, and agrees to their contents.</p>
+<h4>Agree as follows:</h4>
+<ol>
+<li>Merchant expressly agrees that the (guaranteed) payouts by the Acquiring Bank of funds from transactions shall be made to the Foundation.</li>
+<li>MultiSafepay credits the funds directly to Merchant's MultiSafepay payment account. MultiSafepay debits the (transaction) fees directly from Merchant's MultiSafepay payment account.</li>
+<li>Merchant may at any time instruct that funds be transferred from Merchant's MultiSafepay payment account to Merchant's business bank account.</li>
+<li>Following Merchant's instruction, the Foundation shall transfer the funds to Merchant's bank account within a few business days at the latest after receiving the funds from the Acquiring Bank.</li>
+<li>Merchant is aware of the (fraud) risks associated with using the payment methods offered by MultiSafepay. MultiSafepay endeavours to limit these risks for Merchant, but shall not be liable if these risks nevertheless materialise.</li>
+<li>The Agreement between MultiSafepay and Merchant is entered into for an indefinite period, commencing on the date of signing. In the case of a fixed-term contract, MultiSafepay may draw up new contractual terms after that contract period expires, replacing the current terms of the Cooperation Agreement.</li>
+<li>The General Terms and Conditions and any supplementary Agreements apply to this Cooperation Agreement: <a href="https://www.multisafepay.com/terms-conditions" target="_blank" rel="noopener">https://www.multisafepay.com/terms-conditions</a>.</li>
+<li>This Cooperation Agreement supersedes all previous negotiations, commitments and correspondence.</li>
+<li>MultiSafepay's General Terms and Conditions and rates apply to this agreement. Merchant declares that it has received a copy of these General Terms and Conditions prior to and upon entering into this agreement, has read them, and agrees to their applicability to this agreement and to their contents.</li>
+</ol>`;
+
+const LEGAL_PARTNER_EN = `
+<h4>Whereas:</h4>
+<ul>
+<li>Partner provides its customers with an application (standard and/or specifically developed) enabling its customers to sell products and/or services online.</li>
+<li>Partner wishes to connect the MultiSafepay payment platform to this application for one or more of its customers.</li>
+<li>MultiSafepay B.V. ('MultiSafepay') is willing to pay Partner a commission on the transactions of each of Partner's customers that starts using the MultiSafepay payment platform.</li>
+<li>Partner undertakes to provide a professional integration between MultiSafepay and the customer.</li>
+<li>Both parties have agreed on the conditions and the manner in which the above shall be implemented and wish to record this agreement in writing.</li>
+<li>The General Terms and Conditions and any supplementary Agreements apply to this Cooperation Agreement: <a href="https://www.multisafepay.com/terms-conditions" target="_blank" rel="noopener">https://www.multisafepay.com/terms-conditions</a>.</li>
+</ul>
+<h4>Article 1: Remuneration and payment</h4>
+<ol>
+<li>Partner's remuneration shall arise through a buy/sell structure in which a commission is accrued based on a buy rate and a sell rate.</li>
+<li>The buy rate is set out in the Financial Proposal in this document.</li>
+<li>The sell rate is determined and managed by Partner.</li>
+<li>A settlement takes place monthly, after which a commission amount is paid.</li>
+</ol>
+<h4>Article 2: Partner's obligations</h4>
+<ul class="clauses">
+<li>2.1 Partner must familiarise itself with the functionalities of the MultiSafepay payment platform in advance.</li>
+<li>2.2 Partner shall ensure the professional installation of the integration between MultiSafepay and the prospective customer.</li>
+<li>2.3 Partner may use MultiSafepay's name and/or logo made available on the website in its communications to third parties, provided this does not harm MultiSafepay's reputation and/or image.</li>
+<li>2.4 Partner and MultiSafepay shall consult with each other at least once a year to strengthen their cooperation.</li>
+<li>2.5 Partner shall offer MultiSafepay as the default PSP and shall mention this on its website and, where applicable, in other communications materials listing partnerships.</li>
+</ul>
+<h4>Article 3: MultiSafepay's rights and obligations</h4>
+<ul class="clauses">
+<li>3.1 MultiSafepay shall provide appropriate, up-to-date manuals enabling Partner to implement the integration correctly.</li>
+<li>3.2 MultiSafepay shall provide Partner with a test account enabling extensive testing for an indefinite period and access to the MultiSafepay transaction environment.</li>
+<li>3.3 Partner shall have access to the transaction environment at all times to remain informed of payouts made.</li>
+<li>3.4 A new customer referred by Partner may use MultiSafepay's technical support at any time via techsupport@multisafepay.com or by telephone during office hours on 020 8500 500.</li>
+<li>3.5 MultiSafepay is responsible for customer acceptance and may at any time, without stating reasons, refuse a customer referred by Partner or terminate the relationship with an existing customer.</li>
+</ul>
+<h4>Article 4: Term of the agreement</h4>
+<ul class="clauses">
+<li>4.1 The term of the agreement is 24 months and shall be evaluated by the parties upon expiry.</li>
+<li>4.2 Either party may validly terminate the agreement at any time, subject to a notice period of 1 month.</li>
+<li>4.3 Both MultiSafepay and Partner may also terminate the agreement with immediate effect, without stating reasons or observing a notice period, in the event of serious contractual breaches by Partner or MultiSafepay.</li>
+<li>4.4 Upon termination of the agreement, the payout obligations of MultiSafepay and Partner shall lapse if termination is based on Article 4.3.</li>
+</ul>
+<h4>Article 5: Confidentiality</h4>
+<p>Each party undertakes, both during the term of this agreement and for one year after its termination, to keep confidential all information of a confidential nature obtained in connection with this agreement. Each party shall take all necessary measures to ensure the confidentiality of the information.</p>
+<h4>Article 6: Intellectual property rights</h4>
+<p>The parties retain the intellectual property rights they held prior to this Agreement. MultiSafepay owns and retains all ownership and intellectual property rights in the payment platform, plugins, documentation, systems, platforms, name and logo.</p>
+<h4>Article 7: Governing law</h4>
+<p>This agreement is governed by Dutch law. Any disputes shall, wherever possible, be resolved by mutual consultation and, if the dispute persists, submitted to the competent court in the defendant's place of residence or establishment.</p>`;
+
+function agreementText(docType, lang){
+  if(docType==='partner') return lang==='en'?LEGAL_PARTNER_EN:LEGAL_PARTNER;
+  return lang==='en'?LEGAL_MERCHANT_EN:LEGAL_MERCHANT;
+}
+
 function pgAgreement(){
   const isP=S.docType==='partner';
   return `<div class="page legal"><div class="pad">
     ${logoBlock()}
-    <h2 contenteditable>${isP?'Samenwerkingsvoorstel':'Samenwerkingsovereenkomst'}</h2>
-    ${curLang()==='en'?`<p style="font-size:7.6pt;line-height:1.5;color:#5A6B76;margin-bottom:2mm" contenteditable>The agreement below is provided in Dutch; the Dutch text is the legally binding version.</p>`:''}
-    ${isP?'':`<p style="font-size:7.6pt;line-height:1.5;color:#26313A;margin-bottom:3mm" contenteditable>Partijen bij deze Samenwerkingsovereenkomst zijn <b data-bind="bedrijf">${esc(S.fields.bedrijf)}</b> ("Merchant") en MultiSafepay B.V. Deze Samenwerkingsovereenkomst richt zich op de levering van de in deze Overeenkomst en in de Algemene Voorwaarden MultiSafepay gespecificeerde diensten ("Diensten") van MultiSafepay aan Merchant.</p>`}
-    <div class="legalbody" contenteditable>${isP?LEGAL_PARTNER:LEGAL_MERCHANT}</div>
+    <h2 contenteditable>${isP?L('Samenwerkingsvoorstel','Cooperation proposal'):L('Samenwerkingsovereenkomst','Cooperation Agreement')}</h2>
+    ${isP?'':`<p style="font-size:7.6pt;line-height:1.5;color:#26313A;margin-bottom:3mm" contenteditable>${L('Partijen bij deze Samenwerkingsovereenkomst zijn','The parties to this Cooperation Agreement are')} <b data-bind="bedrijf">${esc(S.fields.bedrijf)}</b> ("Merchant") ${L('en','and')} MultiSafepay B.V. ${L('Deze Samenwerkingsovereenkomst richt zich op de levering van de in deze Overeenkomst en in de Algemene Voorwaarden MultiSafepay gespecificeerde diensten ("Diensten") van MultiSafepay aan Merchant.','This Cooperation Agreement concerns the provision by MultiSafepay to Merchant of the services ("Services") specified in this Agreement and in MultiSafepay\'s General Terms and Conditions.')}</p>`}
+    <div class="legalbody" contenteditable>${agreementText(S.docType, curLang())}</div>
     ${foot()}
   </div></div>`;
 }
