@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Translate merchant and partner agreement pages according to the proposal language and verify both in the generator and PDF.
+- [x] Translate merchant and partner agreement pages according to the proposal language and verify both in the generator and PDF.
 
 - [x] Show how each proposed top-bar option reorganizes existing controls and interactions.
 - [x] Implement the approved top-bar direction without changing functionality.
